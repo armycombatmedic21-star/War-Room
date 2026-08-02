@@ -2743,14 +2743,33 @@ const net = {
       const { ref, onValue } = FB.api;
       off = onValue(ref(FB.db, "rooms"), (snap) => {
         const v = snap.val() || {};
-        cb(Object.keys(v).map((k) => ({
+        const all = Object.keys(v).map((k) => ({
           id: k,
           teams: NUM_TEAMS,
           players: [],
           ...v[k],
           players: v[k].players ? Object.keys(v[k].players) : [],
           spectators: v[k].spectators ? Object.keys(v[k].spectators) : []
-        })));
+        }));
+        const live = all.filter((r) => r.players.length + r.spectators.length > 0);
+        cb(live);
+        const GRACE = 10 * 60 * 1e3;
+        const now = Date.now();
+        all.forEach((r) => {
+          if (r.players.length + r.spectators.length > 0) return;
+          const age = now - (r.createdAt || now);
+          const idle = now - (r.startedAt || r.createdAt || now);
+          if (age > GRACE && idle > GRACE) {
+            try {
+              FB.api.remove(ref(FB.db, "rooms/" + r.id));
+            } catch (e) {
+            }
+            try {
+              FB.api.remove(ref(FB.db, "roomChat/" + r.id));
+            } catch (e) {
+            }
+          }
+        });
       });
     });
     return () => off();
@@ -3372,7 +3391,7 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
     React.createElement(
       "div",
       { className: "room-step mono" + (!mySlot ? " room-step-live" : " room-step-done") },
-      !mySlot ? "\u2460 CLAIM YOUR DRAFT SLOT" : "\u2713 SLOT " + mySlot + " IS YOURS"
+      !mySlot ? "CLAIM YOUR DRAFT SPOT" : "\u2713 SLOT " + mySlot + " IS YOURS"
     ),
     React.createElement(
       "div",
@@ -5383,11 +5402,22 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 /* --- draft room --- */
 .room { display: flex; flex-direction: column; min-height: 100vh; padding: 12px 14px 18px; gap: 11px; }
 
-.room-step { font-size: 11px; letter-spacing: 0.15em; font-weight: 800; padding-bottom: 6px;
+.room-step { font-size: 12px; letter-spacing: 0.14em; font-weight: 800; padding-bottom: 6px;
   border-bottom: 1px solid rgba(150,190,225,0.14); }
-.room-step-live { color: #FFD9A8; animation: stepPulse 1.7s ease-in-out infinite; }
 .room-step-done { color: #8FD6AE; }
-@keyframes stepPulse { 0%,100% { opacity: 0.72; } 50% { opacity: 1; text-shadow: 0 0 14px rgba(240,160,60,0.55); } }
+/* Scaled-down version of the on-the-clock banner \u2014 same green field and rim
+   pulse, so the room reads as part of the same app. */
+.room-step-live { display: block; text-align: center; font-size: 15px; letter-spacing: 0.12em;
+  color: #EAFFF2; padding: 13px 14px; border: none; border-radius: 12px;
+  background: linear-gradient(180deg, #16351F 0%, #0E2416 100%);
+  text-shadow: 0 0 12px rgba(110,235,165,0.55);
+  animation: stepGlow 1.7s ease-in-out infinite; }
+@keyframes stepGlow {
+  0%, 100% { box-shadow: 0 0 0 1.5px rgba(92,214,140,0.7), 0 0 16px 3px rgba(60,190,115,0.35),
+                         0 0 34px 8px rgba(45,165,98,0.16); }
+  50%      { box-shadow: 0 0 0 2px rgba(140,240,180,0.95), 0 0 26px 6px rgba(70,215,130,0.55),
+                         0 0 56px 15px rgba(50,185,110,0.3); }
+}
 .room-attn { animation: readyPulse 1.6s ease-in-out infinite; }
 @keyframes readyPulse {
   0%,100% { box-shadow: 0 0 0 1px rgba(241,237,225,0.18); }
