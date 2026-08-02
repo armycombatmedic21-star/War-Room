@@ -2236,6 +2236,7 @@ function NFLDraftSimulator() {
     }
     if (pickingRef.current) return;
     if (roomId && !amAuthority) return;
+    if (roomId && roomSeats && roomSeats[currentTeamIndex + 1]) return;
     pickingRef.current = true;
     const team = teams[currentTeamIndex];
     const recentPicks = picks.slice(-4).map((p) => p.player);
@@ -2938,6 +2939,53 @@ const net = {
   }
 };
 initFirebase();
+function ChatPanel({ messages, username, onSend, label, compact }) {
+  const [msg, setMsg] = useState("");
+  const feedRef = useRef(null);
+  const list = messages || [];
+  useEffect(() => {
+    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
+  }, [list.length]);
+  function send() {
+    const t = msg.trim();
+    if (!t || !onSend) return;
+    onSend(t);
+    setMsg("");
+  }
+  return React.createElement(
+    "div",
+    { className: "chatpanel" + (compact ? " chatpanel-compact" : "") },
+    label ? React.createElement("div", { className: "lobby-label mono" }, label) : null,
+    React.createElement(
+      "div",
+      { className: "chat-feed", ref: feedRef },
+      list.length === 0 ? React.createElement("div", { className: "chat-empty" }, "No messages yet. Say hello.") : list.map((m) => React.createElement(
+        "div",
+        {
+          key: m.id,
+          className: "chat-msg" + (m.user === username ? " chat-mine" : "")
+        },
+        React.createElement("span", { className: "chat-user" }, m.user),
+        React.createElement("span", { className: "chat-text" }, m.text)
+      ))
+    ),
+    React.createElement(
+      "div",
+      { className: "chat-input-row" },
+      React.createElement("input", {
+        className: "chat-input",
+        placeholder: "Message\u2026",
+        value: msg,
+        maxLength: 200,
+        onChange: (e) => setMsg(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter") send();
+        }
+      }),
+      React.createElement("button", { className: "chat-send", onClick: send }, "SEND")
+    )
+  );
+}
 function UsernameGate({ onSet }) {
   const [val, setVal] = useState("");
   const ok = val.trim().length >= 2;
@@ -3194,6 +3242,11 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
   const [now, setNow] = useState(Date.now());
   const [chatOpen, setChatOpen] = useState(false);
   const [invited, setInvited] = useState(false);
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(true), 4e3);
+    return () => clearTimeout(t);
+  }, [roomId]);
   const [roomChat, setRoomChat] = useState([]);
   const [roomUnread, setRoomUnread] = useState(0);
   const chatOpenRef = useRef(false);
@@ -3262,8 +3315,12 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
     return React.createElement(
       "div",
       { className: "lobby" },
-      React.createElement("div", { className: "rooms-empty" }, "Room not found."),
-      React.createElement("button", { className: "lobby-leave", onClick: onLeave }, "\u2039 BACK TO LOBBY")
+      React.createElement(
+        "div",
+        { className: "rooms-empty" },
+        settled ? "That room is no longer active." : "Connecting to room\u2026"
+      ),
+      settled ? React.createElement("button", { className: "lobby-leave", onClick: onLeave }, "\u2039 BACK TO LOBBY") : null
     );
   }
   return React.createElement(
@@ -3275,6 +3332,21 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
       React.createElement("button", { className: "lobby-leave", onClick: leave }, "\u2039 LOBBY"),
       React.createElement("div", { className: "lobby-title mono" }, room.name),
       isCommish ? React.createElement("span", { className: "room-commish mono" }, "COMMISH") : React.createElement("span", { className: "room-commish room-commish-off mono" }, room.host)
+    ),
+    React.createElement(
+      "button",
+      { className: "invite-bar", onClick: () => {
+        copyText(inviteLink(roomId));
+        setInvited(true);
+        setTimeout(() => setInvited(false), 1800);
+      } },
+      React.createElement("span", { className: "invite-icon" }, "\u{1F517}"),
+      React.createElement(
+        "span",
+        { className: "invite-text" },
+        React.createElement("span", { className: "invite-title mono" }, invited ? "LINK COPIED" : "INVITE FRIENDS"),
+        React.createElement("span", { className: "invite-sub" }, "Room code " + roomId + " \xB7 opens straight into this room")
+      )
     ),
     React.createElement(
       "div",
@@ -3297,7 +3369,11 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
         }
       })
     ),
-    React.createElement("div", { className: "room-label mono" }, "CLAIM YOUR DRAFT SLOT"),
+    React.createElement(
+      "div",
+      { className: "room-step mono" + (!mySlot ? " room-step-live" : " room-step-done") },
+      !mySlot ? "\u2460 CLAIM YOUR DRAFT SLOT" : "\u2713 SLOT " + mySlot + " IS YOURS"
+    ),
     React.createElement(
       "div",
       { className: "room-grid" },
@@ -3319,21 +3395,6 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
           }, "READY") : null
         );
       })
-    ),
-    React.createElement(
-      "button",
-      { className: "invite-bar", onClick: () => {
-        copyText(inviteLink(roomId));
-        setInvited(true);
-        setTimeout(() => setInvited(false), 1800);
-      } },
-      React.createElement("span", { className: "invite-icon" }, "\u{1F517}"),
-      React.createElement(
-        "span",
-        { className: "invite-text" },
-        React.createElement("span", { className: "invite-title mono" }, invited ? "LINK COPIED" : "INVITE FRIENDS"),
-        React.createElement("span", { className: "invite-sub" }, "Room code " + roomId + " \xB7 opens straight into this room")
-      )
     ),
     React.createElement("div", { className: "room-label mono" }, "IN THIS ROOM"),
     React.createElement(
@@ -3384,10 +3445,10 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
       React.createElement("span", { className: "room-cd-num" }, secsLeft)
     ) : null,
     React.createElement("button", {
-      className: "room-ready" + (secsLeft != null && room.status === "waiting" ? " room-ready-cancel" : mySlot && seats[mySlot].ready ? " room-ready-on" : "") + (!mySlot ? " room-ready-off" : ""),
+      className: "room-ready" + (mySlot && !seats[mySlot].ready && secsLeft == null ? " room-attn" : "") + (secsLeft != null && room.status === "waiting" ? " room-ready-cancel" : mySlot && seats[mySlot].ready ? " room-ready-on" : "") + (!mySlot ? " room-ready-off" : ""),
       disabled: !mySlot,
       onClick: toggleReady
-    }, !mySlot ? "CLAIM A SLOT FIRST" : secsLeft != null && room.status === "waiting" ? "CANCEL" : seats[mySlot].ready ? "\u2713 READY" : "READY UP"),
+    }, !mySlot ? "CLAIM A SLOT FIRST" : secsLeft != null && room.status === "waiting" ? "CANCEL" : seats[mySlot].ready ? "\u2713 READY \xB7 TAP TO UNREADY" : "\u2461 TAP TO READY UP"),
     isCommish ? React.createElement("button", {
       className: "room-start" + (allReady ? "" : " room-start-off"),
       disabled: !claimed.length,
@@ -3397,8 +3458,8 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
       }
     }, secsLeft != null ? "START NOW" : allReady ? "START DRAFT" : "START ANYWAY") : React.createElement(
       "div",
-      { className: "room-wait" },
-      allReady ? "Waiting on the commissioner to start\u2026" : "Waiting for all players to ready up\u2026"
+      { className: "room-wait" + (mySlot && seats[mySlot].ready ? " room-wait-live" : "") },
+      !mySlot ? "Pick a slot above to join the draft." : !seats[mySlot].ready ? "Ready up when you are set." : allReady ? "\u2713 You are ready \u2014 waiting on " + room.host + " to start the draft." : "\u2713 You are ready \u2014 waiting on the rest of the room."
     )
   );
 }
@@ -5321,6 +5382,19 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 
 /* --- draft room --- */
 .room { display: flex; flex-direction: column; min-height: 100vh; padding: 12px 14px 18px; gap: 11px; }
+
+.room-step { font-size: 11px; letter-spacing: 0.15em; font-weight: 800; padding-bottom: 6px;
+  border-bottom: 1px solid rgba(150,190,225,0.14); }
+.room-step-live { color: #FFD9A8; animation: stepPulse 1.7s ease-in-out infinite; }
+.room-step-done { color: #8FD6AE; }
+@keyframes stepPulse { 0%,100% { opacity: 0.72; } 50% { opacity: 1; text-shadow: 0 0 14px rgba(240,160,60,0.55); } }
+.room-attn { animation: readyPulse 1.6s ease-in-out infinite; }
+@keyframes readyPulse {
+  0%,100% { box-shadow: 0 0 0 1px rgba(241,237,225,0.18); }
+  50% { box-shadow: 0 0 0 2px rgba(155,243,196,0.85), 0 0 22px 5px rgba(92,214,140,0.45); }
+}
+.room-wait-live { color: #9BF3C4; font-weight: 600; background: rgba(76,180,125,0.12);
+  border: 1px solid rgba(92,214,140,0.32); border-radius: 10px; padding: 11px 12px; }
 .room-commish { flex-shrink: 0; font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; padding: 5px 8px;
   border-radius: 6px; color: #07131f; background: linear-gradient(180deg, #FFE0B8, #F0A03C);
   box-shadow: 0 0 12px 2px rgba(224,140,40,0.35); }
