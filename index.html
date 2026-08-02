@@ -2008,6 +2008,46 @@ function NFLDraftSimulator() {
   const [isCommish, setIsCommish] = useState(false);
   const [spectating, setSpectating] = useState(false);
   const [roomSeats, setRoomSeats] = useState(null);
+  const [authority, setAuthority] = useState(null);
+  useEffect(() => {
+    if (!roomId) return;
+    const byId = new Map(PLAYERS.map((p) => [p.id, p]));
+    return net.onPicks(roomId, (list) => {
+      const rebuilt = [];
+      list.forEach((row) => {
+        const pl = byId.get(row.playerId);
+        if (!pl) return;
+        const pn = row.pickNumber;
+        rebuilt.push({
+          round: Math.ceil(pn / NUM_TEAMS),
+          pickNumber: pn,
+          teamIndex: getTeamIndexForPick(pn),
+          player: pl
+        });
+      });
+      setPicks(rebuilt);
+    });
+  }, [roomId]);
+  useEffect(() => {
+    if (roomId) return net.onAuthority(roomId, setAuthority);
+  }, [roomId]);
+  useEffect(() => {
+    if (!roomId || !isCommish) return;
+    net.beatCommish(roomId, roomUser);
+    const t = setInterval(() => net.beatCommish(roomId, roomUser), 5e3);
+    return () => clearInterval(t);
+  }, [roomId, isCommish, roomUser]);
+  const amAuthority = (() => {
+    if (!roomId) return true;
+    if (isCommish) return true;
+    if (!authority) return false;
+    if (Date.now() - (authority.at || 0) < 15e3) return false;
+    if (!roomSeats) return false;
+    const mine = Object.keys(roomSeats).find((k) => roomSeats[k].user === roomUser);
+    if (!mine) return false;
+    const lowest = Object.keys(roomSeats).map(Number).sort((a, b) => a - b)[0];
+    return Number(mine) === lowest;
+  })();
   useEffect(() => {
     const h = (location.hash || "").replace(/^#/, "");
     if (!h) return;
@@ -2178,6 +2218,10 @@ function NFLDraftSimulator() {
   const currentTeamIndex = draftComplete ? null : getTeamIndexForPick(pickNumber);
   const isUserTurn = !draftComplete && currentTeamIndex === userSlot - 1;
   function makePick(player) {
+    if (roomId) {
+      net.writePick(roomId, picks.length + 1, player.id, roomUser || null);
+      return;
+    }
     setPicks((prev) => {
       if (prev.length >= TOTAL_PICKS) return prev;
       const pn = prev.length + 1;
@@ -2191,6 +2235,7 @@ function NFLDraftSimulator() {
       return;
     }
     if (pickingRef.current) return;
+    if (roomId && !amAuthority) return;
     pickingRef.current = true;
     const team = teams[currentTeamIndex];
     const recentPicks = picks.slice(-4).map((p) => p.player);
@@ -2254,6 +2299,7 @@ function NFLDraftSimulator() {
     if (roomId) {
       setRoomId(null);
       setSpectating(false);
+      setAuthority(null);
       setPhase("lobby");
     } else setPhase("setup");
     setTab("players");
@@ -2361,6 +2407,7 @@ function NFLDraftSimulator() {
       roomSeats,
       spectating,
       onAutoPick: () => {
+        if (roomId && !amAuthority) return;
         const ch = cpuChoose(teams[currentTeamIndex], available, round, picks.slice(-4).map((p) => p.player), positionBias, pickNumber, draftSeed, cpuTuning);
         if (ch) makePick(ch);
       },
@@ -2833,6 +2880,44 @@ const net = {
       const { ref, update } = FB.api;
       update(ref(FB.db, "rooms/" + id), { status: "drafting", startedAt: Date.now() });
     });
+  },
+  // ---- picks ----
+  // Keyed by pick number rather than pushed, so a duplicate write during a
+  // commissioner handoff overwrites itself instead of creating two picks.
+  onPicks(id, cb) {
+    let off = () => {
+    };
+    whenReady(() => {
+      const { ref, onValue } = FB.api;
+      off = onValue(ref(FB.db, "rooms/" + id + "/picks"), (snap) => {
+        const v = snap.val() || {};
+        cb(Object.keys(v).map(Number).sort((a, b) => a - b).map((n) => ({ pickNumber: n, playerId: v[n].p, by: v[n].by })));
+      });
+    });
+    return () => off();
+  },
+  writePick(id, pickNumber, playerId, by) {
+    whenReady(() => {
+      const { ref, set } = FB.api;
+      set(ref(FB.db, "rooms/" + id + "/picks/" + pickNumber), { p: playerId, by: by || null, at: Date.now() });
+    });
+  },
+  // Commissioner heartbeat. If it goes stale another client takes over CPU
+  // duty, so a locked phone does not freeze the room.
+  beatCommish(id, user) {
+    whenReady(() => {
+      const { ref, set } = FB.api;
+      set(ref(FB.db, "rooms/" + id + "/authority"), { user, at: Date.now() });
+    });
+  },
+  onAuthority(id, cb) {
+    let off = () => {
+    };
+    whenReady(() => {
+      const { ref, onValue } = FB.api;
+      off = onValue(ref(FB.db, "rooms/" + id + "/authority"), (snap) => cb(snap.val()));
+    });
+    return () => off();
   },
   // ---- room chat ----
   onRoomChat(id, cb) {
