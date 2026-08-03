@@ -2617,7 +2617,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260803-163339";
+const APP_VERSION = "20260803-212533";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2639,7 +2639,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.2";
+const APP_RELEASE = "5.2.12";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -3025,6 +3025,7 @@ const net = {
 };
 initFirebase();
 const COPILOT_KEY = "warroom.copilot.unlocked";
+const GODSEYE_KEY = "warroom.godseye.unlocked";
 function copilotUnlocked() {
   try {
     return localStorage.getItem(COPILOT_KEY) === "1";
@@ -3038,10 +3039,23 @@ function setCopilotUnlocked() {
   } catch (e) {
   }
 }
-function CopilotLock({ onUnlocked, onClose }) {
+function godsEyeUnlocked() {
+  try {
+    return localStorage.getItem(GODSEYE_KEY) === "1";
+  } catch (e) {
+    return true;
+  }
+}
+function setGodsEyeUnlocked() {
+  try {
+    localStorage.setItem(GODSEYE_KEY, "1");
+  } catch (e) {
+  }
+}
+function CopilotLock({ onUnlocked, onClose, gold, title, code }) {
   const [entered, setEntered] = useState("");
   const [state, setState] = useState("idle");
-  const CODE = "1777";
+  const CODE = code || "1777";
   function tap(n) {
     if (state !== "idle") return;
     const next = entered + n;
@@ -3050,7 +3064,7 @@ function CopilotLock({ onUnlocked, onClose }) {
     if (next === CODE) {
       setState("success");
       setTimeout(() => {
-        setCopilotUnlocked();
+        (gold ? setGodsEyeUnlocked : setCopilotUnlocked)();
         onUnlocked();
       }, 2050);
     } else {
@@ -3063,8 +3077,8 @@ function CopilotLock({ onUnlocked, onClose }) {
     { className: "lock-backdrop", onClick: state === "idle" ? onClose : void 0 },
     React.createElement(
       "div",
-      { className: "lock-card" + (state === "success" ? " lock-card-win" : ""), onClick: (e) => e.stopPropagation() },
-      React.createElement("div", { className: "lock-kicker mono" }, "COPILOT LOCKED"),
+      { className: "lock-card" + (gold ? " lock-gold" : "") + (state === "success" ? " lock-card-win" : ""), onClick: (e) => e.stopPropagation() },
+      React.createElement("div", { className: "lock-kicker mono" }, title || "COPILOT LOCKED"),
       React.createElement("div", { className: "lock-sub" }, "Enter your access code"),
       React.createElement(
         "div",
@@ -3086,7 +3100,7 @@ function CopilotLock({ onUnlocked, onClose }) {
       ),
       React.createElement("div", {
         className: "lock-cta mono lock-cta-" + state
-      }, state === "failed" ? "FAILED" : state === "success" ? "UNLOCKED" : "UNLOCK COPILOT"),
+      }, state === "failed" ? "FAILED" : state === "success" ? "UNLOCKED" : gold ? "UNLOCK GOD'S EYE" : "UNLOCK COPILOT"),
       state === "success" ? React.createElement(
         "div",
         { className: "lock-burst", "aria-hidden": "true" },
@@ -3142,7 +3156,7 @@ function VersionPanel({ open, onClose }) {
   );
 }
 function MiniBoard({ picks, teams, userSlot, pickNumber, roomSeats }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const wrapRef = useRef(null);
   const round = Math.ceil(Math.max(1, pickNumber) / NUM_TEAMS);
   useEffect(() => {
@@ -3160,12 +3174,26 @@ function MiniBoard({ picks, teams, userSlot, pickNumber, roomSeats }) {
     React.createElement(
       "button",
       { className: "mini-toggle", onClick: () => setOpen((v) => !v) },
-      React.createElement("span", { className: "mono" }, "MINI BOARD"),
+      React.createElement(
+        "span",
+        { className: "mini-left" },
+        React.createElement("span", { className: "mini-dot", key: "d" + pickNumber }),
+        React.createElement("span", { className: "mini-title mono" }, "MINI BOARD")
+      ),
       React.createElement(
         "span",
         { className: "mini-right" },
-        React.createElement("span", { className: "mini-meta mono" }, "RD " + round + " \xB7 " + Math.min(pickNumber, TOTAL_PICKS) + "/" + TOTAL_PICKS),
-        React.createElement("span", null, open ? "\u25B4" : "\u25BE")
+        React.createElement(
+          "span",
+          { className: "mini-meta mono" },
+          "Round ",
+          React.createElement("span", { className: "mini-flash", key: "r" + round }, round),
+          " \xB7 Pick ",
+          React.createElement("span", { className: "mini-flash", key: "p" + pickNumber }, Math.min(pickNumber, TOTAL_PICKS)),
+          "/",
+          TOTAL_PICKS
+        ),
+        React.createElement("span", { className: "mini-chev" }, open ? "\u25B4" : "\u25BE")
       )
     ),
     open ? React.createElement(
@@ -3864,6 +3892,22 @@ function DraftScreen(props) {
   const [timerLen, setTimerLen] = useState(60);
   const [copilot, setCopilot] = useState(false);
   const [copilotIgniting, setCopilotIgniting] = useState(false);
+  const [godsEye, setGodsEye] = useState(false);
+  const [godsIgniting, setGodsIgniting] = useState(false);
+  const [godsLock, setGodsLock] = useState(false);
+  const [oddsInfo, setOddsInfo] = useState(null);
+  function toggleGodsEye() {
+    if (!godsEye && !godsEyeUnlocked()) {
+      setGodsLock(true);
+      return;
+    }
+    const next = !godsEye;
+    setGodsEye(next);
+    if (next) {
+      setGodsIgniting(true);
+      setTimeout(() => setGodsIgniting(false), 960);
+    }
+  }
   function toggleCopilot() {
     if (!copilot && !copilotUnlocked()) {
       setLockOpen(true);
@@ -4000,7 +4044,7 @@ function DraftScreen(props) {
     "div",
     { className: "draft" + (launching ? " is-entering" : "") },
     /* @__PURE__ */ React.createElement("div", { className: "field-bar" }, /* @__PURE__ */ React.createElement("div", { className: "field-track" }, Array.from({ length: 11 }, (_, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "yard-line", style: { left: `${(i + 1) * (100 / 12)}%` } })), /* @__PURE__ */ React.createElement("div", { className: "field-progress", style: { width: `${progressPct}%` } }), /* @__PURE__ */ React.createElement("div", { className: "field-ball", style: { left: `${progressPct}%` } }, "\u{1F3C8}")), /* @__PURE__ */ React.createElement("div", { className: "field-meta" }, /* @__PURE__ */ React.createElement("span", { className: "mono" }, draftComplete ? "FINAL" : `RD ${round} \xB7 PICK ${pickInRound}/12`), /* @__PURE__ */ React.createElement("span", { className: "field-meta-right" }, /* @__PURE__ */ React.createElement("span", { className: "mono muted" }, Math.min(pickNumber, TOTAL_PICKS), "/", TOTAL_PICKS), confirmReset ? /* @__PURE__ */ React.createElement("span", { className: "restart-confirm" }, /* @__PURE__ */ React.createElement("button", { className: "restart-yes mono", onClick: onReset }, roomId ? "RETURN TO LOBBY?" : "LEAVE DRAFT?"), /* @__PURE__ */ React.createElement("button", { className: "restart-no mono", onClick: () => setConfirmReset(false) }, "CANCEL")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "home-btn", onClick: () => setConfirmReset(true), "aria-label": "Home" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 10.5 12 3l9 7.5" }), /* @__PURE__ */ React.createElement("path", { d: "M5 9.8V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.8" }))), /* @__PURE__ */ React.createElement("button", { className: "gear-btn" + (roomId && !isCommish ? " gear-hidden" : ""), onClick: () => setGearOpen(true), "aria-label": "Draft settings" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "3.2" }), /* @__PURE__ */ React.createElement("path", { d: "M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" }))))))),
-    draftComplete ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-done", style: { background: "linear-gradient(180deg, #4CB47D, #3E9C6B)", color: "#0F1A13", borderColor: "transparent", borderRadius: 12 } }, "DRAFT COMPLETE \u2014 check My Team for your final roster") : isUserTurn ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-user" }, /* @__PURE__ */ React.createElement("span", { className: "clk-rim", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "clk-body" }, /* @__PURE__ */ React.createElement("span", { className: "clk-left" }, /* @__PURE__ */ React.createElement("span", { className: "clk-head mono" }, spectating ? "SPECTATING" : "YOU'RE ON THE CLOCK"), /* @__PURE__ */ React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)), timerOn && /* @__PURE__ */ React.createElement("span", { className: "clk-time mono clk-" + clockTone + (clockPct <= 0.15 && clockLeft > 0 ? " clk-flash" : "") }, clockFmt))) : /* @__PURE__ */ React.createElement(
+    draftComplete ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-done", style: { background: "linear-gradient(180deg, #4CB47D, #3E9C6B)", color: "#0F1A13", borderColor: "transparent", borderRadius: 12 } }, "DRAFT COMPLETE \u2014 check My Team for your final roster") : isUserTurn ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-user", key: "clk" + pickNumber }, /* @__PURE__ */ React.createElement("span", { className: "clk-rim", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "clk-body" }, /* @__PURE__ */ React.createElement("span", { className: "clk-left" }, /* @__PURE__ */ React.createElement("span", { className: "clk-head mono" }, spectating ? "SPECTATING" : "YOU'RE ON THE CLOCK"), /* @__PURE__ */ React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)), timerOn && /* @__PURE__ */ React.createElement("span", { className: "clk-time mono clk-" + clockTone + (clockPct <= 0.15 && clockLeft > 0 ? " clk-flash" : "") }, clockFmt))) : /* @__PURE__ */ React.createElement(
       "div",
       { className: "clock-banner clock-them" + (onClockSeat ? " clock-them-human" : "") },
       /* @__PURE__ */ React.createElement(
@@ -4044,6 +4088,18 @@ function DraftScreen(props) {
       );
     })(),
     autoRun && /* @__PURE__ */ React.createElement("div", { className: "devbar" }, /* @__PURE__ */ React.createElement("span", { className: "devbar-label mono" }, "DEVELOPMENT ANALYSIS"), /* @__PURE__ */ React.createElement("span", { className: "devbar-meta" }, rerunning ? "simulating\u2026" : `${picks.length}/${TOTAL_PICKS} picks`), /* @__PURE__ */ React.createElement("button", { className: "devbar-btn", onClick: onRerun, disabled: rerunning }, "\u21BB RERUN")),
+    godsLock && /* @__PURE__ */ React.createElement(CopilotLock, {
+      gold: true,
+      title: "GOD'S EYE LOCKED",
+      code: "1987",
+      onUnlocked: () => {
+        setGodsLock(false);
+        setGodsEye(true);
+        setGodsIgniting(true);
+        setTimeout(() => setGodsIgniting(false), 960);
+      },
+      onClose: () => setGodsLock(false)
+    }),
     lockOpen && /* @__PURE__ */ React.createElement(CopilotLock, {
       onUnlocked: () => {
         setLockOpen(false);
@@ -4107,6 +4163,11 @@ function DraftScreen(props) {
         copilot,
         copilotIgniting,
         onToggleCopilot: toggleCopilot,
+        godsEye,
+        godsIgniting,
+        onToggleGodsEye: toggleGodsEye,
+        oddsInfo,
+        setOddsInfo,
         availableAll,
         picks,
         userSlot,
@@ -4278,14 +4339,14 @@ const SORT_OPTIONS = [
   { key: "POINTS", label: "Projected points" },
   { key: "VORP", label: "VORP (value over replacement)" }
 ];
-function PlayersTab({ filter, setFilter, search, setSearch, players, availableCount, isUserTurn, onDraft, userStarterByes, userStartersByPos, pickNumber, team, sortBy, setSortBy, copilot, copilotIgniting, onToggleCopilot, availableAll, teams, draftSeed, cpuTuning, picks, userSlot, roomSeats }) {
+function PlayersTab({ filter, setFilter, search, setSearch, players, availableCount, isUserTurn, onDraft, userStarterByes, userStartersByPos, pickNumber, team, sortBy, setSortBy, copilot, copilotIgniting, onToggleCopilot, availableAll, teams, draftSeed, cpuTuning, picks, userSlot, roomSeats, godsEye, godsIgniting, onToggleGodsEye, oddsInfo, setOddsInfo }) {
   const [fxId, setFxId] = useState(null);
   const [byeInfo, setByeInfo] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const recPool = availableAll && availableAll.length ? availableAll : players;
   const [availability, setAvailability] = useState(null);
   useEffect(() => {
-    if (!copilot || !team || !teams) {
+    if (!copilot && !godsEye || !team || !teams) {
       setAvailability(null);
       return;
     }
@@ -4294,12 +4355,13 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
       setAvailability(null);
       return;
     }
-    const shortlist = recPool.slice().sort((a, b) => a.adp - b.adp).slice(0, 40);
+    const pool = recPool.slice().sort((a, b) => a.adp - b.adp).slice(0, 240);
+    const runs = godsEye ? 30 : 12;
     const id = setTimeout(() => {
-      setAvailability(simulateAvailability(shortlist, teams, pickNumber, next, draftSeed, cpuTuning, 12));
+      setAvailability(simulateAvailability(pool, teams, pickNumber, next, draftSeed, cpuTuning, runs));
     }, 0);
     return () => clearTimeout(id);
-  }, [copilot, pickNumber, isUserTurn]);
+  }, [copilot, godsEye, pickNumber, isUserTurn]);
   const recommendation = useMemo(() => {
     if (!copilot || !team || !isUserTurn) return null;
     if (!teams) return null;
@@ -4368,6 +4430,30 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
   })), /* @__PURE__ */ React.createElement("div", { className: "sort-bar" }, /* @__PURE__ */ React.createElement("span", { className: "sort-label mono" }, "FILTERS:"), /* @__PURE__ */ React.createElement("div", { className: "sort-select-wrap" }, /* @__PURE__ */ React.createElement("select", { className: "sort-select", value: sortBy, onChange: (e) => setSortBy(e.target.value) }, SORT_OPTIONS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o.key, value: o.key }, o.label))), /* @__PURE__ */ React.createElement("span", { className: "sort-caret" }, "\u25BE")), /* @__PURE__ */ React.createElement(
     "button",
     {
+      className: "gods-btn" + (godsEye ? " gods-on" : "") + (godsIgniting ? " gods-igniting" : ""),
+      onClick: onToggleGodsEye,
+      "aria-pressed": godsEye,
+      "aria-label": "God's Eye"
+    },
+    godsEye ? /* @__PURE__ */ React.createElement(
+      "span",
+      { className: "gods-orbit", "aria-hidden": "true" },
+      Array.from({ length: 8 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: i }))
+    ) : null,
+    /* @__PURE__ */ React.createElement(
+      "svg",
+      { viewBox: "0 0 26 16", width: "22", height: "15", "aria-hidden": "true" },
+      godsEye ? /* @__PURE__ */ React.createElement(
+        "g",
+        null,
+        /* @__PURE__ */ React.createElement("path", { d: "M1 8s4.6-6.4 12-6.4S25 8 25 8s-4.6 6.4-12 6.4S1 8 1 8z", fill: "none", stroke: "currentColor", strokeWidth: "1.6" }),
+        /* @__PURE__ */ React.createElement("circle", { cx: "13", cy: "8", r: "3.5", fill: "currentColor" }),
+        /* @__PURE__ */ React.createElement("circle", { cx: "13", cy: "8", r: "1.4", fill: "#1a1204" })
+      ) : /* @__PURE__ */ React.createElement("path", { d: "M1.5 8.5s5 4.6 11.5 4.6S24.5 8.5 24.5 8.5", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round" })
+    )
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
       className: "copilot-btn" + (copilot ? " copilot-on" : "") + (copilotIgniting ? " copilot-igniting" : ""),
       onClick: onToggleCopilot,
       "aria-pressed": copilot
@@ -4376,7 +4462,32 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
     copilotIgniting && /* @__PURE__ */ React.createElement("span", { className: "copilot-burst", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("i", null), /* @__PURE__ */ React.createElement("i", null), /* @__PURE__ */ React.createElement("i", null), /* @__PURE__ */ React.createElement("i", null)),
     /* @__PURE__ */ React.createElement("span", { className: "copilot-dot" }),
     /* @__PURE__ */ React.createElement("span", { className: "copilot-label mono" }, "COPILOT")
-  )), byeInfo && /* @__PURE__ */ React.createElement("div", { className: "bye-pop-backdrop", onClick: () => setByeInfo(null) }, /* @__PURE__ */ React.createElement("div", { className: "bye-pop" + (byeInfo.byeRed ? "" : " bye-pop-caution"), onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "bye-pop-head" }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-week mono" + (byeInfo.byeRed ? "" : " bye-pop-week-caution") }, "WEEK ", byeInfo.bye, " BYE"), /* @__PURE__ */ React.createElement("button", { className: "bye-pop-close", onClick: () => setByeInfo(null) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "bye-pop-lead" }, "Drafting ", /* @__PURE__ */ React.createElement("b", null, byeInfo.player.name), " would put", " ", byeInfo.samePos.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, "another ", /* @__PURE__ */ React.createElement("b", null, byeInfo.player.pos), " on your Week ", byeInfo.bye, " bye.") : /* @__PURE__ */ React.createElement(React.Fragment, null, "a ", byeInfo.mates.length + 1, "th starter on your Week ", byeInfo.bye, " bye.")), /* @__PURE__ */ React.createElement("div", { className: "bye-pop-label mono" }, "ALREADY OUT THAT WEEK"), byeInfo.mates.map((m, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "bye-pop-row" + (m.pos === byeInfo.player.pos ? " bye-pop-row-hot" : "") }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[m.slot] || m.slot), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-name" }, m.name), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-meta" }, m.pos, m.posRank, " \xB7 ", m.team))), byeInfo.stillAvailable && byeInfo.stillAvailable.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "bye-pop-label mono bye-pop-label-ok" }, "STILL AVAILABLE THAT WEEK"), byeInfo.stillAvailable.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "bye-pop-row bye-pop-row-ok" }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[s.slot] || s.slot), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-name" }, s.name), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-meta" }, s.pos, s.posRank, " \xB7 Bye ", s.bye)))), !byeInfo.byeRed ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "Just one other starter is out that week, at a different position. Worth noting, not a problem yet.") : byeInfo.noneLeft ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn" }, "You would have no ", byeInfo.player.pos, " to start in Week ", byeInfo.bye, ".") : byeInfo.samePos.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "You would still have ", byeInfo.stillAvailable.length, " ", byeInfo.player.pos, " available in Week ", byeInfo.bye, " \u2014 thinner, but covered.") : null)), analysis && /* @__PURE__ */ React.createElement("div", { className: "cop-backdrop", onClick: () => setAnalysis(null) }, /* @__PURE__ */ React.createElement("div", { className: "cop-sheet", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "cop-head" }, /* @__PURE__ */ React.createElement("span", { className: "cop-badge mono" }, "COPILOT ANALYSIS"), /* @__PURE__ */ React.createElement("button", { className: "cop-close", onClick: () => setAnalysis(null) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "cop-pick" }, /* @__PURE__ */ React.createElement(PosTag, { pos: analysis.player.pos }), /* @__PURE__ */ React.createElement("div", { className: "cop-pick-body" }, /* @__PURE__ */ React.createElement("div", { className: "cop-pick-name" }, analysis.player.name), /* @__PURE__ */ React.createElement("div", { className: "cop-pick-sub" }, analysis.player.pos, analysis.player.posRank, " \xB7 ", analysis.player.team, BYE_WEEKS[analysis.player.team] ? ` \xB7 Bye ${BYE_WEEKS[analysis.player.team]}` : "")), /* @__PURE__ */ React.createElement("div", { className: "cop-conf" }, /* @__PURE__ */ React.createElement("div", { className: "cop-conf-val" }, analysis.margin >= 25 ? "STRONG" : analysis.margin >= 10 ? "CLEAR" : "NARROW"), /* @__PURE__ */ React.createElement("div", { className: "cop-conf-label mono" }, "EDGE"))), /* @__PURE__ */ React.createElement("div", { className: "cop-verdict" }, "Best value on the board once your roster, positional scarcity and draft timing are accounted for.", analysis.nextPick ? ` Your next pick is #${analysis.nextPick}.` : ""), /* @__PURE__ */ React.createElement("div", { className: "cop-label mono" }, "WHY HIM"), analysis.factors.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).map((f, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "cop-factor " + (f.delta >= 0 ? "cop-factor-plus" : "cop-factor-minus") }, /* @__PURE__ */ React.createElement("span", { className: "cop-factor-bar" }), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-body" }, /* @__PURE__ */ React.createElement("span", { className: "cop-factor-label" }, f.label), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-detail" }, f.detail)), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-delta mono" }, f.delta >= 0 ? "+" : "", Math.round(f.delta)))), analysis.runnersUp.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "cop-label mono" }, "ALSO CONSIDERED"), analysis.runnersUp.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "cop-alt" }, /* @__PURE__ */ React.createElement("span", { className: "cop-alt-name" }, r.player.name), /* @__PURE__ */ React.createElement("span", { className: "cop-alt-meta" }, r.player.pos, r.player.posRank, " \xB7 ", Math.round(playerPoints(r.player)), " proj"), /* @__PURE__ */ React.createElement("span", { className: "cop-alt-gap mono" }, "\u2212", Math.round(analysis.score - r.score))))), /* @__PURE__ */ React.createElement("button", { className: "cop-draft draft-btn", onClick: () => {
+  )), oddsInfo && /* @__PURE__ */ React.createElement(
+    "div",
+    { className: "odds-backdrop", onClick: () => setOddsInfo(null) },
+    /* @__PURE__ */ React.createElement(
+      "div",
+      { className: "odds-card", onClick: (e) => e.stopPropagation() },
+      /* @__PURE__ */ React.createElement("div", { className: "odds-eyebrow mono" }, "GOD'S EYE"),
+      /* @__PURE__ */ React.createElement("div", { className: "odds-pct mono" }, oddsInfo.pct, "%"),
+      /* @__PURE__ */ React.createElement("div", { className: "odds-name" }, oddsInfo.player.name),
+      /* @__PURE__ */ React.createElement(
+        "div",
+        { className: "odds-body" },
+        "Based on advanced simulations of the picks between now and your next turn, ",
+        oddsInfo.player.name.split(" ").slice(-1)[0],
+        " is still on the board ",
+        oddsInfo.pct,
+        "% of the time."
+      ),
+      /* @__PURE__ */ React.createElement(
+        "div",
+        { className: "odds-note" },
+        oddsInfo.pct >= 70 ? "Comfortable wait \u2014 he will very likely still be here." : oddsInfo.pct >= 40 ? "A real gamble \u2014 roughly a coin flip." : "Take him now if you want him."
+      ),
+      /* @__PURE__ */ React.createElement("button", { className: "odds-close", onClick: () => setOddsInfo(null) }, "GOT IT")
+    )
+  ), byeInfo && /* @__PURE__ */ React.createElement("div", { className: "bye-pop-backdrop", onClick: () => setByeInfo(null) }, /* @__PURE__ */ React.createElement("div", { className: "bye-pop" + (byeInfo.byeRed ? "" : " bye-pop-caution"), onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "bye-pop-head" }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-week mono" + (byeInfo.byeRed ? "" : " bye-pop-week-caution") }, "WEEK ", byeInfo.bye, " BYE"), /* @__PURE__ */ React.createElement("button", { className: "bye-pop-close", onClick: () => setByeInfo(null) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "bye-pop-lead" }, "Drafting ", /* @__PURE__ */ React.createElement("b", null, byeInfo.player.name), " would put", " ", byeInfo.samePos.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, "another ", /* @__PURE__ */ React.createElement("b", null, byeInfo.player.pos), " on your Week ", byeInfo.bye, " bye.") : /* @__PURE__ */ React.createElement(React.Fragment, null, "a ", byeInfo.mates.length + 1, "th starter on your Week ", byeInfo.bye, " bye.")), /* @__PURE__ */ React.createElement("div", { className: "bye-pop-label mono" }, "ALREADY OUT THAT WEEK"), byeInfo.mates.map((m, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "bye-pop-row" + (m.pos === byeInfo.player.pos ? " bye-pop-row-hot" : "") }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[m.slot] || m.slot), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-name" }, m.name), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-meta" }, m.pos, m.posRank, " \xB7 ", m.team))), byeInfo.stillAvailable && byeInfo.stillAvailable.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "bye-pop-label mono bye-pop-label-ok" }, "STILL AVAILABLE THAT WEEK"), byeInfo.stillAvailable.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "bye-pop-row bye-pop-row-ok" }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[s.slot] || s.slot), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-name" }, s.name), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-meta" }, s.pos, s.posRank, " \xB7 Bye ", s.bye)))), !byeInfo.byeRed ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "Just one other starter is out that week, at a different position. Worth noting, not a problem yet.") : byeInfo.noneLeft ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn" }, "You would have no ", byeInfo.player.pos, " to start in Week ", byeInfo.bye, ".") : byeInfo.samePos.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "You would still have ", byeInfo.stillAvailable.length, " ", byeInfo.player.pos, " available in Week ", byeInfo.bye, " \u2014 thinner, but covered.") : null)), analysis && /* @__PURE__ */ React.createElement("div", { className: "cop-backdrop", onClick: () => setAnalysis(null) }, /* @__PURE__ */ React.createElement("div", { className: "cop-sheet", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "cop-head" }, /* @__PURE__ */ React.createElement("span", { className: "cop-badge mono" }, "COPILOT ANALYSIS"), /* @__PURE__ */ React.createElement("button", { className: "cop-close", onClick: () => setAnalysis(null) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "cop-pick" }, /* @__PURE__ */ React.createElement(PosTag, { pos: analysis.player.pos }), /* @__PURE__ */ React.createElement("div", { className: "cop-pick-body" }, /* @__PURE__ */ React.createElement("div", { className: "cop-pick-name" }, analysis.player.name), /* @__PURE__ */ React.createElement("div", { className: "cop-pick-sub" }, analysis.player.pos, analysis.player.posRank, " \xB7 ", analysis.player.team, BYE_WEEKS[analysis.player.team] ? ` \xB7 Bye ${BYE_WEEKS[analysis.player.team]}` : "")), /* @__PURE__ */ React.createElement("div", { className: "cop-conf" }, /* @__PURE__ */ React.createElement("div", { className: "cop-conf-val" }, analysis.margin >= 25 ? "STRONG" : analysis.margin >= 10 ? "CLEAR" : "NARROW"), /* @__PURE__ */ React.createElement("div", { className: "cop-conf-label mono" }, "EDGE"))), /* @__PURE__ */ React.createElement("div", { className: "cop-verdict" }, "Best value on the board once your roster, positional scarcity and draft timing are accounted for.", analysis.nextPick ? ` Your next pick is #${analysis.nextPick}.` : ""), /* @__PURE__ */ React.createElement("div", { className: "cop-label mono" }, "WHY HIM"), analysis.factors.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).map((f, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "cop-factor " + (f.delta >= 0 ? "cop-factor-plus" : "cop-factor-minus") }, /* @__PURE__ */ React.createElement("span", { className: "cop-factor-bar" }), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-body" }, /* @__PURE__ */ React.createElement("span", { className: "cop-factor-label" }, f.label), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-detail" }, f.detail)), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-delta mono" }, f.delta >= 0 ? "+" : "", Math.round(f.delta)))), analysis.runnersUp.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "cop-label mono" }, "ALSO CONSIDERED"), analysis.runnersUp.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "cop-alt" }, /* @__PURE__ */ React.createElement("span", { className: "cop-alt-name" }, r.player.name), /* @__PURE__ */ React.createElement("span", { className: "cop-alt-meta" }, r.player.pos, r.player.posRank, " \xB7 ", Math.round(playerPoints(r.player)), " proj"), /* @__PURE__ */ React.createElement("span", { className: "cop-alt-gap mono" }, "\u2212", Math.round(analysis.score - r.score))))), /* @__PURE__ */ React.createElement("button", { className: "cop-draft draft-btn", onClick: () => {
     setAnalysis(null);
     handleDraft(analysis.player);
   } }, "DRAFT ", analysis.player.name.split(" ").slice(-1)[0].toUpperCase()), /* @__PURE__ */ React.createElement("div", { className: "cop-disclaimer" }, "Copilot weighs projections, scarcity, your roster and draft timing. It can't see injuries, news, or your own read on a player."))), /* @__PURE__ */ React.createElement(
@@ -4413,7 +4524,23 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
         }
       },
       fxId === p.id && /* @__PURE__ */ React.createElement("span", { className: "draft-fx", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-tl" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-tr" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-bl" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-br" })),
-      /* @__PURE__ */ React.createElement("div", { className: "player-info" }, /* @__PURE__ */ React.createElement("div", { className: "player-title" }, p.name, recommendation && recommendation.player.id === p.id && /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { className: "player-info" }, /* @__PURE__ */ React.createElement("div", { className: "player-title" }, p.name, godsEye && availability && availability.get(p.id) != null && /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          className: "gods-badge" + (godsIgniting ? " gods-badge-ign" : ""),
+          onClick: (e) => {
+            e.stopPropagation();
+            setOddsInfo({ player: p, pct: Math.round(availability.get(p.id) * 100) });
+          },
+          "aria-label": "Availability odds"
+        },
+        /* @__PURE__ */ React.createElement(
+          "span",
+          { className: "gods-badge-orbit", "aria-hidden": "true" },
+          Array.from({ length: 10 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: i }))
+        ),
+        /* @__PURE__ */ React.createElement("span", { className: "gods-badge-num mono" }, Math.round(availability.get(p.id) * 100), "%")
+      ), recommendation && recommendation.player.id === p.id && /* @__PURE__ */ React.createElement(
         "button",
         {
           className: "cop-star",
@@ -5493,7 +5620,20 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .clock-user { display: block; position: sticky; padding: 0 !important; border: none !important;
   background: linear-gradient(180deg, #16351F 0%, #0E2416 100%) !important; color: #F2FFF6 !important;
   border-radius: 13px !important; overflow: visible !important;
-  animation: clkGlow 1.7s ease-in-out infinite; }
+  /* One bright flare the moment the turn lands, then the resting pulse. The
+     element is keyed on pick number so this replays every turn. */
+  animation: clkHit 0.9s cubic-bezier(0.15,0.9,0.2,1) 1, clkGlow 1.7s ease-in-out 0.9s infinite; }
+@keyframes clkHit {
+  0%   { background: linear-gradient(180deg, #FFFFFF, #C8FFDF) !important;
+         box-shadow: 0 0 0 3px rgba(210,255,230,1), 0 0 70px 26px rgba(150,255,200,0.95),
+                     0 0 130px 50px rgba(90,235,160,0.6);
+         transform: scale(1.035); }
+  35%  { background: linear-gradient(180deg, #3E9C6B, #17361F) !important;
+         box-shadow: 0 0 0 2.5px rgba(160,255,200,0.9), 0 0 42px 14px rgba(90,225,150,0.7); }
+  100% { background: linear-gradient(180deg, #16351F 0%, #0E2416 100%) !important;
+         box-shadow: 0 0 0 1.5px rgba(92,214,140,0.7), 0 0 18px 3px rgba(60,190,115,0.38);
+         transform: scale(1); }
+}
 @keyframes clkGlow {
   0%, 100% { box-shadow: 0 0 0 1.5px rgba(92,214,140,0.7), 0 0 18px 3px rgba(60,190,115,0.38),
                          0 0 40px 9px rgba(45,165,98,0.18), inset 0 1px 0 rgba(190,255,215,0.16); }
@@ -6052,12 +6192,29 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 /* --- mini board --- */
 .mini { margin-bottom: 9px; }
 .mini-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%;
-  padding: 10px 13px; border-radius: 11px; cursor: pointer; font-size: 12.5px; font-weight: 700;
-  letter-spacing: 0.1em; color: #C9D6C9; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(241,237,225,0.14); }
+  padding: 12px 14px; border-radius: 11px; cursor: pointer;
+  background: linear-gradient(180deg, rgba(30,58,92,0.6), rgba(16,32,52,0.6));
+  border: 1px solid rgba(120,180,255,0.32); }
+.mini-left { display: flex; align-items: center; gap: 10px; }
+.mini-title { font-size: 14px; font-weight: 800; letter-spacing: 0.11em; color: #9CC6F5;
+  text-shadow: 0 0 12px rgba(96,178,255,0.45); }
+/* Rests dull and flares once per pick, so the board feels live at a glance. */
+.mini-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%;
+  background: #3A6E9E; box-shadow: 0 0 4px 1px rgba(58,110,158,0.5);
+  animation: miniDot 1.1s ease-out; }
+@keyframes miniDot {
+  0%   { background: #9BD4FF; box-shadow: 0 0 14px 4px rgba(155,212,255,0.95); }
+  100% { background: #3A6E9E; box-shadow: 0 0 4px 1px rgba(58,110,158,0.5); }
+}
+.mini-flash { display: inline-block; color: #BFE4FF; animation: miniNum 0.9s ease-out; }
+@keyframes miniNum {
+  0%   { color: #EAF6FF; text-shadow: 0 0 14px rgba(150,210,255,1); transform: scale(1.25); }
+  100% { color: #BFE4FF; text-shadow: none; transform: scale(1); }
+}
+.mini-chev { color: #7FB6E8; }
 .mini-toggle:active { transform: scale(0.99); }
 .mini-right { display: flex; align-items: center; gap: 9px; }
-.mini-meta { font-size: 11px; font-weight: 700; color: #8FA396; }
+.mini-meta { font-size: 16px; font-weight: 700; color: #8FA9C0; }
 .mini-wrap { max-height: 172px; overflow-y: auto; overscroll-behavior: contain; margin-top: 7px;
   padding: 8px; border-radius: 11px; background: rgba(0,0,0,0.26);
   border: 1px solid rgba(241,237,225,0.1); scroll-behavior: smooth; }
@@ -6072,6 +6229,7 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .mini-col-mine { color: #9BF3C4; }
 .mini-cell { flex: 1; min-width: 0; height: 20px; border-radius: 3px; font-size: 8px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; overflow: hidden;
+  white-space: nowrap; text-overflow: clip; line-height: 20px; padding: 0 1px;
   color: #8FA396; background: rgba(255,255,255,0.045); }
 .mini-cell-QB { background: rgba(199,86,86,0.5); color: #FFE2E2; }
 .mini-cell-RB { background: rgba(76,180,125,0.5); color: #E4FFF0; }
@@ -6085,6 +6243,105 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
   0%,100% { box-shadow: inset 0 0 0 1.5px rgba(140,240,180,0.5); }
   50%     { box-shadow: inset 0 0 0 2px rgba(160,255,200,1), 0 0 10px 2px rgba(90,220,140,0.5); }
 }
+
+/* --- God's Eye --- */
+.gods-btn { position: relative; display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 34px; flex-shrink: 0; margin-left: auto; margin-right: 7px; border-radius: 9px;
+  cursor: pointer; color: #6E6552; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(241,237,225,0.14); transition: color 0.3s ease, border-color 0.3s ease; }
+.gods-btn:active { transform: scale(0.94); }
+.gods-on { color: #1A1204; border-color: rgba(255,214,120,0.75);
+  background: linear-gradient(180deg, #FFE9A8 0%, #F0C05A 30%, #C68A1F 100%);
+  box-shadow: 0 0 16px 3px rgba(232,179,61,0.5), inset 0 1px 0 rgba(255,246,214,0.7); }
+.gods-igniting { animation: godsIgnite 0.95s cubic-bezier(0.15,0.9,0.2,1); }
+@keyframes godsIgnite {
+  0%   { box-shadow: 0 0 0 3px rgba(255,246,214,1), 0 0 60px 22px rgba(255,214,120,0.95); transform: scale(1.14); }
+  100% { box-shadow: 0 0 16px 3px rgba(232,179,61,0.5); transform: scale(1); }
+}
+.gods-orbit { position: absolute; inset: -5px; pointer-events: none; }
+.gods-orbit i { position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; border-radius: 50%;
+  background: #FFF0C8; box-shadow: 0 0 5px 1.5px rgba(255,224,150,0.9);
+  animation: godsOrbit 3.4s linear infinite; }
+.gods-orbit i:nth-child(n) { animation-delay: calc(var(--i, 0) * 0.24s); }
+@keyframes godsOrbit {
+  0%   { transform: rotate(0deg) translateX(19px) rotate(0deg); opacity: 0.25; }
+  50%  { opacity: 1; }
+  100% { transform: rotate(360deg) translateX(19px) rotate(-360deg); opacity: 0.25; }
+}
+.gods-orbit i:nth-child(1){animation-delay:0s}    .gods-orbit i:nth-child(2){animation-delay:.42s}
+.gods-orbit i:nth-child(3){animation-delay:.84s}  .gods-orbit i:nth-child(4){animation-delay:1.26s}
+.gods-orbit i:nth-child(5){animation-delay:1.68s}  .gods-orbit i:nth-child(6){animation-delay:2.1s}
+.gods-orbit i:nth-child(7){animation-delay:2.52s} .gods-orbit i:nth-child(8){animation-delay:2.94s}
+/* per-player odds badge \u2014 same footprint as the Copilot star */
+.gods-badge { position: relative; display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 7px; padding: 2px 7px; border-radius: 20px; cursor: pointer; vertical-align: middle;
+  color: #1A1204; background: linear-gradient(180deg, #FFE9A8 0%, #F0C05A 42%, #C68A1F 100%);
+  border: 1px solid rgba(255,238,190,0.75);
+  box-shadow: inset 0 1px 0 rgba(255,250,230,0.55); }
+.gods-badge:active { transform: scale(0.93); }
+.gods-badge-num { font-size: 11px; font-weight: 800; letter-spacing: 0.02em; }
+@keyframes godsBreathe {
+  0%,100% { box-shadow: 0 0 9px 1.5px rgba(232,179,61,0.35), inset 0 1px 0 rgba(255,250,230,0.65); }
+  50%     { box-shadow: 0 0 18px 4px rgba(255,208,110,0.7), inset 0 1px 0 rgba(255,250,230,0.8); }
+}
+.gods-badge-ign { animation: godsIgnite 0.95s cubic-bezier(0.15,0.9,0.2,1); }
+.gods-badge-orbit { display: none; }
+.gods-badge-orbit i { position: absolute; top: 50%; left: 50%; width: 1.5px; height: 1.5px; border-radius: 50%;
+  background: #FFF6DC; box-shadow: 0 0 4px 1px rgba(255,230,160,0.85); animation: godsBadgeOrbit 4s linear infinite; }
+@keyframes godsBadgeOrbit {
+  0%   { transform: rotate(0deg) translateX(22px) rotate(0deg); opacity: 0.2; }
+  50%  { opacity: 0.9; }
+  100% { transform: rotate(360deg) translateX(22px) rotate(-360deg); opacity: 0.2; }
+}
+.gods-badge-orbit i:nth-child(1){animation-delay:0s}   .gods-badge-orbit i:nth-child(2){animation-delay:.4s}
+.gods-badge-orbit i:nth-child(3){animation-delay:.8s}  .gods-badge-orbit i:nth-child(4){animation-delay:1.2s}
+.gods-badge-orbit i:nth-child(5){animation-delay:1.6s} .gods-badge-orbit i:nth-child(6){animation-delay:2s}
+.gods-badge-orbit i:nth-child(7){animation-delay:2.4s} .gods-badge-orbit i:nth-child(8){animation-delay:2.8s}
+.gods-badge-orbit i:nth-child(9){animation-delay:3.2s} .gods-badge-orbit i:nth-child(10){animation-delay:3.6s}
+
+/* odds explanation */
+.odds-backdrop { position: fixed; inset: 0; z-index: 138; background: rgba(14,9,2,0.84);
+  backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; padding: 22px; }
+.odds-card { width: 100%; max-width: 330px; padding: 22px 20px 18px; border-radius: 18px; text-align: center;
+  background: linear-gradient(180deg, #2A2110, #150F05); border: 1px solid rgba(232,179,61,0.5);
+  box-shadow: 0 20px 56px rgba(0,0,0,0.7), 0 0 34px 5px rgba(200,150,50,0.2);
+  animation: sheetUp 0.28s cubic-bezier(0.16,1,0.3,1); }
+.odds-eyebrow { font-size: 10.5px; font-weight: 800; letter-spacing: 0.2em; color: #E8C97A; }
+.odds-pct { font-family: 'Anton', sans-serif; font-size: 52px; line-height: 1.05; margin: 4px 0 0;
+  color: #FFE9A8; text-shadow: 0 0 26px rgba(240,192,90,0.55); }
+.odds-name { font-size: 16px; font-weight: 700; color: #F8F0DC; margin-bottom: 12px; }
+.odds-body { font-size: 14px; line-height: 1.55; color: #D8CBAE; }
+.odds-note { font-size: 13px; color: #E8C97A; margin-top: 10px; font-weight: 600; }
+.odds-close { width: 100%; margin-top: 18px; min-height: 44px; border-radius: 11px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 800; letter-spacing: 0.1em;
+  color: #1A1204; background: linear-gradient(180deg, #FFE9A8, #C68A1F);
+  border: 1.5px solid rgba(255,240,200,0.7); }
+
+/* gold keypad variant */
+.lock-gold { background: linear-gradient(180deg, #2A2110, #150F05); border-color: rgba(232,179,61,0.5); }
+.lock-gold .lock-kicker { color: #E8C97A; }
+.lock-gold .lock-dot-on { background: linear-gradient(180deg, #FFE9A8, #E0A93C);
+  border-color: rgba(255,238,190,0.85); box-shadow: 0 0 11px 2px rgba(232,179,61,0.65); }
+.lock-gold .lock-key { color: #F8F0DC; border-color: rgba(232,179,61,0.28); }
+.lock-gold .lock-key:active { background: rgba(232,179,61,0.24); }
+.lock-gold .lock-cta { color: #E8C97A; border-color: rgba(232,179,61,0.6);
+  background: linear-gradient(180deg, rgba(90,68,26,0.9), rgba(42,32,12,0.9));
+  animation: ctaPulseGold 1.7s ease-in-out infinite; }
+@keyframes ctaPulseGold {
+  0%,100% { box-shadow: 0 0 0 1px rgba(232,179,61,0.3), 0 0 14px 2px rgba(200,150,50,0.3); }
+  50%     { box-shadow: 0 0 0 2px rgba(255,224,150,0.85), 0 0 26px 6px rgba(232,179,61,0.6); }
+}
+.lock-gold .lock-cta-success { animation: ctaWinGold 2s cubic-bezier(0.3,0,0.1,1) forwards; color: #1A1204; }
+@keyframes ctaWinGold {
+  0%   { background: linear-gradient(180deg, rgba(90,68,26,0.9), rgba(42,32,12,0.9)); color: #E8C97A; }
+  45%  { background: linear-gradient(180deg, #F0C05A, #A8721A); color: #1A1204;
+         box-shadow: 0 0 26px 7px rgba(232,179,61,0.75); }
+  80%  { background: linear-gradient(180deg, #FFF6DC, #FFD98A);
+         box-shadow: 0 0 60px 20px rgba(255,220,140,0.95); }
+  100% { background: linear-gradient(180deg, #FFFFFF, #FFE9A8);
+         box-shadow: 0 0 96px 34px rgba(255,236,180,1); }
+}
+.lock-gold .lock-burst i { background: linear-gradient(180deg, #FFF6DC, rgba(232,179,61,0)); }
 .gear-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
   flex-shrink: 0; border-radius: 8px; cursor: pointer; color: #BFE4FF;
   background: linear-gradient(180deg, rgba(40,76,118,0.95), rgba(18,38,62,0.95));
@@ -6289,9 +6546,6 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .draft-btn::before { content: ""; position: absolute; top: 1.5px; left: 2px; right: 2px; bottom: 1.5px; border-radius: 7px; background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.42) 26%, rgba(255,255,255,0.1) 44%, rgba(255,255,255,0) 56%); pointer-events: none; }
 /* A slow specular band travelling across the face \u2014 the thing that makes an
    object read as polished rather than merely bright. */
-.draft-btn::after { content: ""; position: absolute; top: -60%; bottom: -60%; width: 26px; left: -40px; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
-  transform: rotate(18deg); animation: draftShine 3.4s ease-in-out infinite; }
 @keyframes draftShine {
   0%, 62% { left: -40px; opacity: 0; }
   68%     { opacity: 0.9; }
