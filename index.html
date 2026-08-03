@@ -2003,6 +2003,9 @@ function NFLDraftSimulator() {
   });
   const [history, setHistory] = useState(() => loadHistory());
   const [historyOpen, setHistoryOpen] = useState(false);
+  useEffect(() => {
+    checkForUpdate(phase === "setup");
+  }, [phase]);
   const [roomId, setRoomId] = useState(null);
   const [roomUser, setRoomUser] = useState("");
   const [isCommish, setIsCommish] = useState(false);
@@ -2495,7 +2498,7 @@ function SetupScreen({ onOpenLobby, userSlot, setUserSlot, userName, setUserName
   }
   const slotPicks = userSlot ? picksForSlot(userSlot) : null;
   const profile = userSlot ? slotProfile(userSlot) : null;
-  return /* @__PURE__ */ React.createElement("div", { className: "setup" }, /* @__PURE__ */ React.createElement("div", { className: "setup-hero" }, /* @__PURE__ */ React.createElement("div", { className: "hero-field", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "eyebrow" }, "MOCK DRAFT \xB7 2026 SEASON"), /* @__PURE__ */ React.createElement("h1", { className: "title" }, "WAR ROOM"), /* @__PURE__ */ React.createElement("div", { className: "stat-chips" }, /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, NUM_TEAMS), " TEAMS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, ROUNDS), " ROUNDS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, TOTAL_PICKS), " PICKS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, "NON"), "-PPR"))), /* @__PURE__ */ React.createElement("div", { className: "card setup-card", style: GLASS_CARD_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "card-label" }, "Team name ", /* @__PURE__ */ React.createElement("span", { className: "muted" }, "(optional)")), /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement("div", { className: "setup" }, /* @__PURE__ */ React.createElement("div", { className: "setup-hero" }, /* @__PURE__ */ React.createElement("div", { className: "hero-field", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "eyebrow-row" }, React.createElement("span", { className: "eyebrow" }, "MOCK DRAFT \xB7 2026 SEASON"), React.createElement(VersionBadge, null)), /* @__PURE__ */ React.createElement("h1", { className: "title" }, "WAR ROOM"), /* @__PURE__ */ React.createElement("div", { className: "stat-chips" }, /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, NUM_TEAMS), " TEAMS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, ROUNDS), " ROUNDS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, TOTAL_PICKS), " PICKS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, "NON"), "-PPR"))), /* @__PURE__ */ React.createElement("div", { className: "card setup-card", style: GLASS_CARD_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "card-label" }, "Team name ", /* @__PURE__ */ React.createElement("span", { className: "muted" }, "(optional)")), /* @__PURE__ */ React.createElement(
     "input",
     {
       className: "text-input",
@@ -2617,6 +2620,52 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
+const APP_VERSION = "20260803-035555";
+let updateChecked = false;
+async function checkForUpdate(safeToReload) {
+  if (updateChecked || !safeToReload) return;
+  updateChecked = true;
+  try {
+    const url = location.pathname + "?_cb=" + Date.now();
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return;
+    const text = await res.text();
+    const m = text.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+    if (!m) return;
+    if (m[1] && m[1] !== APP_VERSION) {
+      try {
+        sessionStorage.setItem("warroom.reloaded", "1");
+      } catch (e) {
+      }
+      location.reload();
+    }
+  } catch (e) {
+  }
+}
+const APP_RELEASE = "5.2";
+const CHANGELOG = [
+  { v: "5.2", notes: [
+    "Multiplayer is live \u2014 lobby, rooms and drafts sync across devices",
+    "Picks shared in real time, with automatic CPU handoff if the commissioner drops",
+    "Spectator mode: watch any room without taking a slot",
+    "Chat in the lobby, the room and during the draft",
+    "Bottom tab bar, draft completion screen with league standings",
+    "The app now updates itself \u2014 no more clearing your cache"
+  ] },
+  { v: "5.0", notes: [
+    "Multiplayer lobby and draft rooms",
+    "Invite links and room codes"
+  ] },
+  { v: "4.3", notes: [
+    "Co-Pilot rebuilt on the scarcity engine",
+    "Draft history with resume, and drafts that survive a closed tab",
+    "New on-the-clock banner and in-draft settings"
+  ] },
+  { v: "4.0", notes: [
+    "CPU engine rebuilt on ADP with noise \u2014 boards now look like real mocks",
+    "Full ADP and rankings refresh"
+  ] }
+];
 const NAME_KEY = "warroom.username";
 function inviteLink(roomId) {
   const base = location.origin + location.pathname;
@@ -2691,7 +2740,23 @@ const net = {
     whenReady(() => {
       const { ref, query, limitToLast, onValue } = FB.api;
       const q = query(ref(FB.db, "lobbyChat"), limitToLast(120));
-      off = onValue(q, (snap) => cb(listToArray(snap.val()).sort((a, b) => a.at - b.at)));
+      off = onValue(q, (snap) => {
+        const all = listToArray(snap.val());
+        const CUTOFF = 5 * 60 * 60 * 1e3;
+        const now = Date.now();
+        const fresh = [], stale = [];
+        all.forEach((m) => {
+          const t = typeof m.sv === "number" ? m.sv : m.at;
+          (t && now - t > CUTOFF ? stale : fresh).push(m);
+        });
+        cb(fresh.sort((a, b) => a.at - b.at));
+        stale.forEach((m) => {
+          try {
+            FB.api.remove(ref(FB.db, "lobbyChat/" + m.id));
+          } catch (e) {
+          }
+        });
+      });
     });
     return () => off();
   },
@@ -2958,6 +3023,122 @@ const net = {
   }
 };
 initFirebase();
+const COPILOT_KEY = "warroom.copilot.unlocked";
+function copilotUnlocked() {
+  try {
+    return localStorage.getItem(COPILOT_KEY) === "1";
+  } catch (e) {
+    return true;
+  }
+}
+function setCopilotUnlocked() {
+  try {
+    localStorage.setItem(COPILOT_KEY, "1");
+  } catch (e) {
+  }
+}
+function CopilotLock({ onUnlocked, onClose }) {
+  const [entered, setEntered] = useState("");
+  const [state, setState] = useState("idle");
+  const CODE = "1777";
+  function tap(n) {
+    if (state !== "idle") return;
+    const next = entered + n;
+    setEntered(next);
+    if (next.length < 4) return;
+    if (next === CODE) {
+      setState("success");
+      setTimeout(() => {
+        setCopilotUnlocked();
+        onUnlocked();
+      }, 2050);
+    } else {
+      setState("failed");
+      setTimeout(() => onClose(), 900);
+    }
+  }
+  return React.createElement(
+    "div",
+    { className: "lock-backdrop", onClick: state === "idle" ? onClose : void 0 },
+    React.createElement(
+      "div",
+      { className: "lock-card" + (state === "success" ? " lock-card-win" : ""), onClick: (e) => e.stopPropagation() },
+      React.createElement("div", { className: "lock-kicker mono" }, "CO-PILOT LOCKED"),
+      React.createElement("div", { className: "lock-sub" }, "Enter your access code"),
+      React.createElement(
+        "div",
+        { className: "lock-dots" },
+        [0, 1, 2, 3].map((i) => React.createElement("span", {
+          key: i,
+          className: "lock-dot" + (entered.length > i ? " lock-dot-on" : "") + (state === "failed" ? " lock-dot-bad" : "")
+        }))
+      ),
+      React.createElement(
+        "div",
+        { className: "lock-pad" },
+        [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => React.createElement("button", {
+          key: n,
+          className: "lock-key",
+          disabled: state !== "idle",
+          onClick: () => tap(String(n))
+        }, n))
+      ),
+      React.createElement("div", {
+        className: "lock-cta mono lock-cta-" + state
+      }, state === "failed" ? "FAILED" : state === "success" ? "UNLOCKED" : "UNLOCK CO-PILOT"),
+      state === "success" ? React.createElement(
+        "div",
+        { className: "lock-burst", "aria-hidden": "true" },
+        Array.from({ length: 10 }, (_, i) => React.createElement("i", { key: i }))
+      ) : null
+    )
+  );
+}
+function VersionBadge() {
+  const [open, setOpen] = useState(false);
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(
+      "button",
+      { className: "ver-badge mono", onClick: () => setOpen(true) },
+      "v",
+      APP_RELEASE,
+      React.createElement("span", { className: "ver-chev" }, "\u2139")
+    ),
+    open ? React.createElement(
+      "div",
+      { className: "ver-backdrop", onClick: () => setOpen(false) },
+      React.createElement(
+        "div",
+        { className: "ver-card", onClick: (e) => e.stopPropagation() },
+        React.createElement(
+          "div",
+          { className: "ver-head" },
+          React.createElement("span", { className: "ver-title mono" }, "WHAT'S NEW"),
+          React.createElement("button", { className: "ver-close", onClick: () => setOpen(false) }, "\u2715")
+        ),
+        CHANGELOG.map((rel) => React.createElement(
+          "div",
+          { key: rel.v, className: "ver-rel" },
+          React.createElement(
+            "div",
+            { className: "ver-relv mono" },
+            "v" + rel.v,
+            rel.v === APP_RELEASE ? React.createElement("span", { className: "ver-now" }, "CURRENT") : null
+          ),
+          rel.notes.map((n, i) => React.createElement(
+            "div",
+            { key: i, className: "ver-note" },
+            React.createElement("span", { className: "ver-dot" }),
+            n
+          ))
+        )),
+        React.createElement("div", { className: "ver-build mono" }, "build ", APP_VERSION)
+      )
+    ) : null
+  );
+}
 function ChatPanel({ messages, username, onSend, label, compact }) {
   const [msg, setMsg] = useState("");
   const feedRef = useRef(null);
@@ -3619,11 +3800,16 @@ function CpuStrategyPanel({ positionBias, setPositionBias, cpuTuning, setCpuTuni
 function DraftScreen(props) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
   const [timerOn, setTimerOn] = useState(true);
   const [timerLen, setTimerLen] = useState(60);
   const [copilot, setCopilot] = useState(false);
   const [copilotIgniting, setCopilotIgniting] = useState(false);
   function toggleCopilot() {
+    if (!copilot && !copilotUnlocked()) {
+      setLockOpen(true);
+      return;
+    }
     const next = !copilot;
     setCopilot(next);
     if (next) {
@@ -3738,7 +3924,15 @@ function DraftScreen(props) {
     });
     return map;
   }, [teams, userSlot]);
-  return /* @__PURE__ */ React.createElement("div", { className: "draft" + (launching ? " is-entering" : "") }, /* @__PURE__ */ React.createElement("div", { className: "field-bar" }, /* @__PURE__ */ React.createElement("div", { className: "field-track" }, Array.from({ length: 11 }, (_, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "yard-line", style: { left: `${(i + 1) * (100 / 12)}%` } })), /* @__PURE__ */ React.createElement("div", { className: "field-progress", style: { width: `${progressPct}%` } }), /* @__PURE__ */ React.createElement("div", { className: "field-ball", style: { left: `${progressPct}%` } }, "\u{1F3C8}")), /* @__PURE__ */ React.createElement("div", { className: "field-meta" }, /* @__PURE__ */ React.createElement("span", { className: "mono" }, draftComplete ? "FINAL" : `RD ${round} \xB7 PICK ${pickInRound}/12`), /* @__PURE__ */ React.createElement("span", { className: "field-meta-right" }, /* @__PURE__ */ React.createElement("span", { className: "mono muted" }, Math.min(pickNumber, TOTAL_PICKS), "/", TOTAL_PICKS), confirmReset ? /* @__PURE__ */ React.createElement("span", { className: "restart-confirm" }, /* @__PURE__ */ React.createElement("button", { className: "restart-yes mono", onClick: onReset }, roomId ? "RETURN TO LOBBY?" : "LEAVE DRAFT?"), /* @__PURE__ */ React.createElement("button", { className: "restart-no mono", onClick: () => setConfirmReset(false) }, "CANCEL")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "home-btn", onClick: () => setConfirmReset(true), "aria-label": "Home" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 10.5 12 3l9 7.5" }), /* @__PURE__ */ React.createElement("path", { d: "M5 9.8V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.8" }))), /* @__PURE__ */ React.createElement("button", { className: "gear-btn" + (roomId && !isCommish ? " gear-hidden" : ""), onClick: () => setGearOpen(true), "aria-label": "Draft settings" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "3.2" }), /* @__PURE__ */ React.createElement("path", { d: "M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" }))))))), draftComplete ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-done", style: { background: "linear-gradient(180deg, #4CB47D, #3E9C6B)", color: "#0F1A13", borderColor: "transparent", borderRadius: 12 } }, "DRAFT COMPLETE \u2014 check My Team for your final roster") : isUserTurn ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-user" }, /* @__PURE__ */ React.createElement("span", { className: "clk-rim", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "clk-body" }, /* @__PURE__ */ React.createElement("span", { className: "clk-left" }, /* @__PURE__ */ React.createElement("span", { className: "clk-head mono" }, spectating ? "SPECTATING" : "YOU'RE ON THE CLOCK"), /* @__PURE__ */ React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)), timerOn && /* @__PURE__ */ React.createElement("span", { className: "clk-time mono clk-" + clockTone + (clockPct <= 0.15 && clockLeft > 0 ? " clk-flash" : "") }, clockFmt))) : /* @__PURE__ */ React.createElement("div", { className: "clock-banner", style: { background: "rgba(27,43,32,0.52)", border: "1px solid rgba(241,237,225,0.13)", borderRadius: 12, boxShadow: "0 3px 10px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.035)" } }, /* @__PURE__ */ React.createElement("span", { className: "dot-pulse" }), " ", onClockName, " is picking\u2026"), /* @__PURE__ */ React.createElement(LastPickStrip, { picks, teams, canUndo: canUndo && !roomId, onUndo, undoCount }), autoRun && /* @__PURE__ */ React.createElement("div", { className: "devbar" }, /* @__PURE__ */ React.createElement("span", { className: "devbar-label mono" }, "DEVELOPMENT ANALYSIS"), /* @__PURE__ */ React.createElement("span", { className: "devbar-meta" }, rerunning ? "simulating\u2026" : `${picks.length}/${TOTAL_PICKS} picks`), /* @__PURE__ */ React.createElement("button", { className: "devbar-btn", onClick: onRerun, disabled: rerunning }, "\u21BB RERUN")), gearOpen && /* @__PURE__ */ React.createElement("div", { className: "gear-backdrop", onClick: () => setGearOpen(false) }, /* @__PURE__ */ React.createElement("div", { className: "gear-sheet", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "gear-head" }, /* @__PURE__ */ React.createElement("span", { className: "gear-title mono" }, "DRAFT SETTINGS"), /* @__PURE__ */ React.createElement("button", { className: "gear-close", onClick: () => setGearOpen(false) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "gear-label mono" }, "DRAFT TIMER"), /* @__PURE__ */ React.createElement("button", { className: "noise-row" + (timerOn ? " noise-on" : ""), onClick: () => setTimerOn(!timerOn) }, /* @__PURE__ */ React.createElement("span", { className: "noise-text" }, /* @__PURE__ */ React.createElement("span", { className: "noise-title" }, "Show clock on your turn"), /* @__PURE__ */ React.createElement("span", { className: "noise-sub" }, "Counts down only \u2014 never picks for you")), /* @__PURE__ */ React.createElement("span", { className: "cwswitch" + (timerOn ? " cwswitch-on" : "") }, /* @__PURE__ */ React.createElement("span", { className: "cwknob" }))), timerOn && /* @__PURE__ */ React.createElement("div", { className: "gear-chips" }, [30, 60, 90, 120].map((s) => /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement("div", { className: "draft" + (launching ? " is-entering" : "") }, /* @__PURE__ */ React.createElement("div", { className: "field-bar" }, /* @__PURE__ */ React.createElement("div", { className: "field-track" }, Array.from({ length: 11 }, (_, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "yard-line", style: { left: `${(i + 1) * (100 / 12)}%` } })), /* @__PURE__ */ React.createElement("div", { className: "field-progress", style: { width: `${progressPct}%` } }), /* @__PURE__ */ React.createElement("div", { className: "field-ball", style: { left: `${progressPct}%` } }, "\u{1F3C8}")), /* @__PURE__ */ React.createElement("div", { className: "field-meta" }, /* @__PURE__ */ React.createElement("span", { className: "mono" }, draftComplete ? "FINAL" : `RD ${round} \xB7 PICK ${pickInRound}/12`), /* @__PURE__ */ React.createElement("span", { className: "field-meta-right" }, /* @__PURE__ */ React.createElement("span", { className: "mono muted" }, Math.min(pickNumber, TOTAL_PICKS), "/", TOTAL_PICKS), confirmReset ? /* @__PURE__ */ React.createElement("span", { className: "restart-confirm" }, /* @__PURE__ */ React.createElement("button", { className: "restart-yes mono", onClick: onReset }, roomId ? "RETURN TO LOBBY?" : "LEAVE DRAFT?"), /* @__PURE__ */ React.createElement("button", { className: "restart-no mono", onClick: () => setConfirmReset(false) }, "CANCEL")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "home-btn", onClick: () => setConfirmReset(true), "aria-label": "Home" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 10.5 12 3l9 7.5" }), /* @__PURE__ */ React.createElement("path", { d: "M5 9.8V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.8" }))), /* @__PURE__ */ React.createElement("button", { className: "gear-btn" + (roomId && !isCommish ? " gear-hidden" : ""), onClick: () => setGearOpen(true), "aria-label": "Draft settings" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "3.2" }), /* @__PURE__ */ React.createElement("path", { d: "M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" }))))))), draftComplete ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-done", style: { background: "linear-gradient(180deg, #4CB47D, #3E9C6B)", color: "#0F1A13", borderColor: "transparent", borderRadius: 12 } }, "DRAFT COMPLETE \u2014 check My Team for your final roster") : isUserTurn ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-user" }, /* @__PURE__ */ React.createElement("span", { className: "clk-rim", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "clk-body" }, /* @__PURE__ */ React.createElement("span", { className: "clk-left" }, /* @__PURE__ */ React.createElement("span", { className: "clk-head mono" }, spectating ? "SPECTATING" : "YOU'RE ON THE CLOCK"), /* @__PURE__ */ React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)), timerOn && /* @__PURE__ */ React.createElement("span", { className: "clk-time mono clk-" + clockTone + (clockPct <= 0.15 && clockLeft > 0 ? " clk-flash" : "") }, clockFmt))) : /* @__PURE__ */ React.createElement("div", { className: "clock-banner", style: { background: "rgba(27,43,32,0.52)", border: "1px solid rgba(241,237,225,0.13)", borderRadius: 12, boxShadow: "0 3px 10px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.035)" } }, /* @__PURE__ */ React.createElement("span", { className: "dot-pulse" }), " ", onClockName, " is picking\u2026"), /* @__PURE__ */ React.createElement(LastPickStrip, { picks, teams, canUndo: canUndo && !roomId, onUndo, undoCount }), autoRun && /* @__PURE__ */ React.createElement("div", { className: "devbar" }, /* @__PURE__ */ React.createElement("span", { className: "devbar-label mono" }, "DEVELOPMENT ANALYSIS"), /* @__PURE__ */ React.createElement("span", { className: "devbar-meta" }, rerunning ? "simulating\u2026" : `${picks.length}/${TOTAL_PICKS} picks`), /* @__PURE__ */ React.createElement("button", { className: "devbar-btn", onClick: onRerun, disabled: rerunning }, "\u21BB RERUN")), lockOpen && /* @__PURE__ */ React.createElement(CopilotLock, {
+    onUnlocked: () => {
+      setLockOpen(false);
+      setCopilot(true);
+      setCopilotIgniting(true);
+      setTimeout(() => setCopilotIgniting(false), 960);
+    },
+    onClose: () => setLockOpen(false)
+  }), gearOpen && /* @__PURE__ */ React.createElement("div", { className: "gear-backdrop", onClick: () => setGearOpen(false) }, /* @__PURE__ */ React.createElement("div", { className: "gear-sheet", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "gear-head" }, /* @__PURE__ */ React.createElement("span", { className: "gear-title mono" }, "DRAFT SETTINGS"), /* @__PURE__ */ React.createElement("button", { className: "gear-close", onClick: () => setGearOpen(false) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "gear-label mono" }, "DRAFT TIMER"), /* @__PURE__ */ React.createElement("button", { className: "noise-row" + (timerOn ? " noise-on" : ""), onClick: () => setTimerOn(!timerOn) }, /* @__PURE__ */ React.createElement("span", { className: "noise-text" }, /* @__PURE__ */ React.createElement("span", { className: "noise-title" }, "Show clock on your turn"), /* @__PURE__ */ React.createElement("span", { className: "noise-sub" }, "Counts down only \u2014 never picks for you")), /* @__PURE__ */ React.createElement("span", { className: "cwswitch" + (timerOn ? " cwswitch-on" : "") }, /* @__PURE__ */ React.createElement("span", { className: "cwknob" }))), timerOn && /* @__PURE__ */ React.createElement("div", { className: "gear-chips" }, [30, 60, 90, 120].map((s) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: s,
@@ -5603,6 +5797,97 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .who-pill-me { color: #9BF3C4; background: rgba(76,180,125,0.14); border-color: rgba(92,214,140,0.4); }
 .who-dot { width: 6px; height: 6px; border-radius: 50%; background: #5DE39A;
   box-shadow: 0 0 6px 1.5px rgba(93,227,154,0.7); }
+
+/* --- Co-Pilot unlock --- */
+.lock-backdrop { position: fixed; inset: 0; z-index: 140; background: rgba(3,8,14,0.86);
+  backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 22px; }
+.lock-card { position: relative; width: 100%; max-width: 330px; padding: 24px 20px 20px; border-radius: 20px;
+  text-align: center; overflow: hidden;
+  background: linear-gradient(180deg, #13273D, #0A1521);
+  border: 1px solid rgba(120,180,255,0.4);
+  box-shadow: 0 22px 60px rgba(0,0,0,0.7), 0 0 34px 5px rgba(80,140,220,0.16);
+  animation: sheetUp 0.3s cubic-bezier(0.16,1,0.3,1); }
+.lock-card-win { animation: sheetUp 0.3s cubic-bezier(0.16,1,0.3,1), lockWin 2s ease-out forwards; }
+@keyframes lockWin {
+  0%   { border-color: rgba(120,180,255,0.4); }
+  100% { border-color: rgba(180,225,255,0.95); }
+}
+.lock-kicker { font-size: 11px; font-weight: 800; letter-spacing: 0.2em; color: #9CC6F5; }
+.lock-sub { font-size: 13px; color: #8FA9C0; margin: 6px 0 16px; }
+.lock-dots { display: flex; justify-content: center; gap: 13px; margin-bottom: 20px; }
+.lock-dot { width: 13px; height: 13px; border-radius: 50%; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(150,190,225,0.3); transition: all 0.16s ease; }
+.lock-dot-on { background: linear-gradient(180deg, #CBE8FF, #6FB4F5); border-color: rgba(190,225,255,0.8);
+  box-shadow: 0 0 11px 2px rgba(96,178,255,0.6); transform: scale(1.12); }
+.lock-dot-bad { background: linear-gradient(180deg, #FF8A72, #C4321C) !important;
+  border-color: rgba(255,160,140,0.7) !important; box-shadow: 0 0 11px 2px rgba(228,72,58,0.6) !important; }
+.lock-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 18px; }
+.lock-key { padding: 15px 0; border-radius: 13px; cursor: pointer; font-size: 22px; font-weight: 700;
+  color: #EAF3FB; background: rgba(255,255,255,0.06); border: 1px solid rgba(150,190,225,0.22); }
+.lock-key:active { transform: scale(0.94); background: rgba(96,178,255,0.2); }
+.lock-cta { min-height: 48px; display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; font-size: 13px; font-weight: 800; letter-spacing: 0.1em;
+  border: 1.5px solid rgba(190,225,255,0.55); color: #BFE4FF;
+  background: linear-gradient(180deg, rgba(40,76,118,0.9), rgba(18,38,62,0.9));
+  animation: ctaPulse 1.7s ease-in-out infinite; }
+@keyframes ctaPulse {
+  0%,100% { box-shadow: 0 0 0 1px rgba(96,178,255,0.25), 0 0 14px 2px rgba(80,140,220,0.25); }
+  50%     { box-shadow: 0 0 0 2px rgba(150,205,255,0.8), 0 0 26px 6px rgba(96,178,255,0.55); }
+}
+.lock-cta-failed { animation: none; color: #FFD9D0; border-color: rgba(255,150,130,0.7);
+  background: linear-gradient(180deg, #C4321C, #7A1B0C); }
+/* The payoff: a slow build to a bright flash over two seconds. */
+.lock-cta-success { animation: ctaWin 2s cubic-bezier(0.3,0,0.1,1) forwards; color: #06121F;
+  border-color: rgba(230,244,255,0.95); }
+@keyframes ctaWin {
+  0%   { background: linear-gradient(180deg, rgba(40,76,118,0.9), rgba(18,38,62,0.9)); color: #BFE4FF;
+         box-shadow: 0 0 0 1px rgba(96,178,255,0.3); transform: scale(1); }
+  45%  { background: linear-gradient(180deg, #6FB4F5, #2A6CB8); color: #06121F;
+         box-shadow: 0 0 26px 7px rgba(96,178,255,0.7); transform: scale(1.02); }
+  80%  { background: linear-gradient(180deg, #EAF6FF, #7CC4FF);
+         box-shadow: 0 0 60px 20px rgba(140,210,255,0.9); transform: scale(1.06); }
+  100% { background: linear-gradient(180deg, #FFFFFF, #CBE8FF);
+         box-shadow: 0 0 96px 34px rgba(190,230,255,1); transform: scale(1.04); }
+}
+.lock-burst { position: absolute; inset: 0; pointer-events: none; }
+.lock-burst i { position: absolute; top: 50%; left: 50%; width: 3px; height: 22px; border-radius: 3px;
+  background: linear-gradient(180deg, #FFFFFF, rgba(124,196,255,0));
+  animation: lockRay 1.6s ease-out 0.5s forwards; opacity: 0; }
+.lock-burst i:nth-child(1){transform:rotate(0deg)}   .lock-burst i:nth-child(2){transform:rotate(36deg)}
+.lock-burst i:nth-child(3){transform:rotate(72deg)}  .lock-burst i:nth-child(4){transform:rotate(108deg)}
+.lock-burst i:nth-child(5){transform:rotate(144deg)} .lock-burst i:nth-child(6){transform:rotate(180deg)}
+.lock-burst i:nth-child(7){transform:rotate(216deg)} .lock-burst i:nth-child(8){transform:rotate(252deg)}
+.lock-burst i:nth-child(9){transform:rotate(288deg)} .lock-burst i:nth-child(10){transform:rotate(324deg)}
+@keyframes lockRay {
+  0%   { opacity: 0; margin-top: 0; height: 10px; }
+  40%  { opacity: 1; }
+  100% { opacity: 0; margin-top: -190px; height: 44px; }
+}
+
+/* --- version badge --- */
+.eyebrow-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.ver-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; color: #8FA396; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(241,237,225,0.14); border-radius: 20px; padding: 4px 11px; cursor: pointer; }
+.ver-badge:active { transform: scale(0.95); }
+.ver-chev { opacity: 0.65; font-size: 10px; }
+.ver-backdrop { position: fixed; inset: 0; z-index: 145; background: rgba(3,10,6,0.84);
+  backdrop-filter: blur(5px); display: flex; justify-content: center;
+  padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+.ver-card { margin: auto; width: 100%; max-width: 360px; padding: 20px; border-radius: 18px;
+  background: linear-gradient(180deg, #16351F, #0A1B10); border: 1px solid rgba(92,214,140,0.35);
+  box-shadow: 0 20px 56px rgba(0,0,0,0.68); animation: sheetUp 0.28s cubic-bezier(0.16,1,0.3,1); }
+.ver-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.ver-title { font-size: 12.5px; font-weight: 800; letter-spacing: 0.16em; color: #8FD6AE; }
+.ver-close { background: none; border: none; color: #8FA396; font-size: 13px; cursor: pointer; padding: 2px 4px; }
+.ver-rel { margin-bottom: 16px; }
+.ver-relv { font-size: 13px; font-weight: 800; color: #EAFFF2; margin-bottom: 7px; }
+.ver-now { font-size: 8.5px; font-weight: 800; letter-spacing: 0.1em; margin-left: 8px; padding: 2px 6px;
+  border-radius: 4px; color: #06180E; background: linear-gradient(180deg, #9BF3C4, #3E9C6B); }
+.ver-note { display: flex; gap: 8px; font-size: 13px; line-height: 1.5; color: #C6DCCD; padding: 3px 0; }
+.ver-dot { flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; background: #5CD68C; margin-top: 7px; }
+.ver-build { font-size: 10.5px; color: #6C8474; text-align: center; padding-top: 10px;
+  border-top: 1px solid rgba(150,220,180,0.12); }
 .gear-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
   flex-shrink: 0; border-radius: 8px; cursor: pointer; color: #BFE4FF;
   background: linear-gradient(180deg, rgba(40,76,118,0.95), rgba(18,38,62,0.95));
