@@ -2012,6 +2012,7 @@ function NFLDraftSimulator() {
   const [spectating, setSpectating] = useState(false);
   const [roomSeats, setRoomSeats] = useState(null);
   const [roomRules, setRoomRules] = useState(null);
+  const [pickStart, setPickStart] = useState(null);
   const [authority, setAuthority] = useState(null);
   useEffect(() => {
     if (!roomId) return;
@@ -2217,6 +2218,20 @@ function NFLDraftSimulator() {
   const pickInRound = pickNumber - (round - 1) * NUM_TEAMS;
   const currentTeamIndex = draftComplete ? null : getTeamIndexForPick(pickNumber);
   const isUserTurn = !draftComplete && currentTeamIndex === userSlot - 1;
+  useEffect(() => {
+    if (!roomId || !amAuthority || phase !== "drafting" || draftComplete) return;
+    net.markPickStart(roomId, pickNumber);
+  }, [roomId, amAuthority, pickNumber, phase, draftComplete]);
+  useEffect(() => {
+    if (!roomId) {
+      setPickStart(null);
+      return;
+    }
+    return net.onRoom(roomId, (r) => {
+      setPickStart(r.pickStartedFor === pickNumber ? r.pickStartedAt : null);
+      if (r.timerLen) setRoomRules((v) => ({ ...v || {}, timerLen: r.timerLen }));
+    });
+  }, [roomId, pickNumber]);
   function makePick(player) {
     if (roomId) {
       net.writePick(roomId, picks.length + 1, player.id, roomUser || null);
@@ -2356,7 +2371,7 @@ function NFLDraftSimulator() {
   }, onStart: (room, slot) => {
     setIsCommish(room.host === roomUser);
     setRoomSeats(room.seats || null);
-    setRoomRules({ noCopilot: !!room.noCopilot, noGodsEye: !!room.noGodsEye, noAutopick: !!room.noAutopick });
+    setRoomRules({ noCopilot: !!room.noCopilot, noGodsEye: !!room.noGodsEye, noAutopick: !!room.noAutopick, timerLen: room.timerLen || 90 });
     setUserSlot(slot);
     setUserName(room.seats[slot] && room.seats[slot].teamName || roomUser);
     setDraftSeed(newDraftSeed());
@@ -2408,9 +2423,10 @@ function NFLDraftSimulator() {
       isCommish,
       roomSeats,
       roomRules,
+      pickStart,
+      amAuthority,
       spectating,
       onAutoPick: () => {
-        if (roomId && !amAuthority) return;
         const ch = cpuChoose(teams[currentTeamIndex], available, round, picks.slice(-4).map((p) => p.player), positionBias, pickNumber, draftSeed, cpuTuning);
         if (ch) makePick(ch);
       },
@@ -2620,7 +2636,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-045908";
+const APP_VERSION = "20260804-065747";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2642,7 +2658,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.21";
+const APP_RELEASE = "5.2.35";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -2885,7 +2901,8 @@ const net = {
         noGodsEye: !!o.noGodsEye,
         noCopilot: !!o.noCopilot,
         chaos: !!o.chaos,
-        noAutopick: !!o.noAutopick
+        noAutopick: !!o.noAutopick,
+        timerLen: o.timerLen || 90
       });
       onDisconnect(ref(FB.db, "rooms/" + id + "/players/" + host)).remove();
     });
@@ -2908,7 +2925,8 @@ const net = {
       noGodsEye: !!(opts || {}).noGodsEye,
       noCopilot: !!(opts || {}).noCopilot,
       chaos: !!(opts || {}).chaos,
-      noAutopick: !!(opts || {}).noAutopick
+      noAutopick: !!(opts || {}).noAutopick,
+      timerLen: (opts || {}).timerLen || 90
     };
   },
   joinRoom(id, user) {
@@ -3005,6 +3023,15 @@ const net = {
     whenReady(() => {
       const { ref, update } = FB.api;
       update(ref(FB.db, "rooms/" + id), { status: "drafting", startedAt: Date.now() });
+    });
+  },
+  // The clock has to come from one shared timestamp. Each client running its
+  // own interval meant twelve different countdowns and autopick firing from
+  // whichever device happened to hit zero first.
+  markPickStart(id, pickNumber) {
+    whenReady(() => {
+      const { ref, update } = FB.api;
+      update(ref(FB.db, "rooms/" + id), { pickStartedAt: Date.now(), pickStartedFor: pickNumber });
     });
   },
   // ---- picks ----
@@ -3367,7 +3394,7 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
   const [rooms, setRooms] = useState([]);
   const [msg, setMsg] = useState("");
   const [creating, setCreating] = useState(false);
-  const [opts, setOpts] = useState({ allowSpectators: true, noGodsEye: false, noCopilot: false, chaos: false, noAutopick: false });
+  const [opts, setOpts] = useState({ allowSpectators: true, noGodsEye: false, noCopilot: false, chaos: false, noAutopick: false, timerLen: 90 });
   const [freshRoom, setFreshRoom] = useState(null);
   const [present, setPresent] = useState([]);
   const [whoOpen, setWhoOpen] = useState(true);
@@ -3478,6 +3505,16 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
             if (e.key === "Enter") doCreate();
           }
         }),
+        React.createElement("div", { className: "nr-label mono" }, "PICK CLOCK"),
+        React.createElement(
+          "div",
+          { className: "nr-clocks" },
+          [30, 45, 60, 90, 120, 180].map((s) => React.createElement("button", {
+            key: s,
+            className: "nr-clock mono" + (opts.timerLen === s ? " nr-clock-on" : ""),
+            onClick: () => setOpts((o) => ({ ...o, timerLen: s }))
+          }, s >= 60 ? s / 60 + (s === 60 ? " min" : " min") : s + "s"))
+        ),
         React.createElement("div", { className: "nr-label mono" }, "ROOM RULES"),
         [
           ["chaos", "Chaos: randomized slots", "Draft order is assigned on entry \u2014 nobody picks their seat"],
@@ -4064,12 +4101,14 @@ function DraftScreen(props) {
     isCommish,
     roomSeats,
     roomRules,
+    pickStart,
+    amAuthority,
     spectating,
     onAutoPick
   } = props;
   useEffect(() => {
-    if (roomId) setTimerLen(90);
-  }, [roomId]);
+    if (roomId) setTimerLen(roomRules && roomRules.timerLen || 90);
+  }, [roomId, roomRules && roomRules.timerLen]);
   const tabRef = useRef("players");
   useEffect(() => {
     tabRef.current = tab;
@@ -4096,10 +4135,18 @@ function DraftScreen(props) {
       setClockLeft(timerLen);
       return;
     }
-    setClockLeft(timerLen);
-    const id = setInterval(() => setClockLeft((v) => v <= 0 ? 0 : v - 1), 1e3);
+    const tick = () => {
+      if (roomId) {
+        setClockLeft(pickStart ? Math.max(0, timerLen - Math.floor((Date.now() - pickStart) / 1e3)) : timerLen);
+      } else {
+        setClockLeft((v) => v <= 0 ? 0 : v - 1);
+      }
+    };
+    if (!roomId) setClockLeft(timerLen);
+    tick();
+    const id = setInterval(tick, 1e3);
     return () => clearInterval(id);
-  }, [isUserTurn, pickNumber, timerLen]);
+  }, [isUserTurn, pickNumber, timerLen, roomId, pickStart]);
   const canDraft = !spectating;
   const [themLeft, setThemLeft] = useState(timerLen);
   useEffect(() => {
@@ -4107,10 +4154,11 @@ function DraftScreen(props) {
       setThemLeft(timerLen);
       return;
     }
-    setThemLeft(timerLen);
-    const id = setInterval(() => setThemLeft((v) => v <= 0 ? 0 : v - 1), 1e3);
+    const tick = () => setThemLeft(pickStart ? Math.max(0, timerLen - Math.floor((Date.now() - pickStart) / 1e3)) : timerLen);
+    tick();
+    const id = setInterval(tick, 1e3);
     return () => clearInterval(id);
-  }, [isUserTurn, pickNumber, timerLen, roomId]);
+  }, [isUserTurn, pickNumber, timerLen, roomId, pickStart]);
   const themPct = timerLen ? themLeft / timerLen : 0;
   const themTone = themPct > 0.5 ? "ok" : themPct > 0.25 ? "warn" : "crit";
   const themFmt = `${Math.floor(themLeft / 60)}:${String(themLeft % 60).padStart(2, "0")}`;
@@ -4119,9 +4167,15 @@ function DraftScreen(props) {
   const clockFmt = `${Math.floor(clockLeft / 60)}:${String(clockLeft % 60).padStart(2, "0")}`;
   useEffect(() => {
     if (roomRules && roomRules.noAutopick) return;
-    if (!roomId || spectating || !isUserTurn || clockLeft > 0 || !onAutoPick) return;
-    onAutoPick();
-  }, [clockLeft, isUserTurn, roomId]);
+    if (!roomId || spectating || !onAutoPick) return;
+    const expired = pickStart && (Date.now() - pickStart) / 1e3 >= timerLen;
+    if (!expired) return;
+    if (isUserTurn) {
+      onAutoPick();
+      return;
+    }
+    if (amAuthority) onAutoPick();
+  }, [clockLeft, themLeft, isUserTurn, roomId, pickStart, amAuthority]);
   const progressPct = Math.min(100, (pickNumber - 1) / TOTAL_PICKS * 100);
   const onClockSeat = roomSeats && currentTeamIndex != null ? roomSeats[currentTeamIndex + 1] : null;
   const onClockName = draftComplete ? null : onClockSeat ? onClockSeat.teamName || onClockSeat.user : teams[currentTeamIndex]?.name;
@@ -4841,6 +4895,18 @@ function RadarChart({ scores, grades, color }) {
     return /* @__PURE__ */ React.createElement("line", { key: a.pos, x1: center, y1: center, x2: x, y2: y, className: "radar-axis" });
   }), /* @__PURE__ */ React.createElement("polygon", { points: dataPath, fill: color, fillOpacity: "0.28", stroke: color, strokeWidth: "2", strokeLinejoin: "round" }), dataPts.map((p, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: p[0], cy: p[1], r: "3.5", fill: color }))), /* @__PURE__ */ React.createElement("div", { className: "radar-labels" }, RADAR_AXES.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.pos, className: "radar-label radar-label-" + a.pos.toLowerCase() }, /* @__PURE__ */ React.createElement(PosTag, { pos: a.pos }), /* @__PURE__ */ React.createElement("span", { className: "radar-label-grade mono", style: { color: gradeColor(grades[a.pos]) } }, grades[a.pos])))));
 }
+function depthPoints(team, picksForTeam) {
+  let pts = 0;
+  LINEUP_SLOTS.forEach((k) => {
+    if (team.slots[k]) pts += playerPoints(team.slots[k]);
+  });
+  const starterIds = new Set(LINEUP_SLOTS.map((k) => team.slots[k]).filter(Boolean).map((p) => p.id));
+  picksForTeam.forEach((p) => {
+    if (starterIds.has(p.player.id)) return;
+    if (p.player.pos === "RB" || p.player.pos === "WR") pts += playerPoints(p.player);
+  });
+  return pts;
+}
 function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId, roomSeats }) {
   const [copied, setCopied] = useState(false);
   const [peek, setPeek] = useState(null);
@@ -5022,6 +5088,57 @@ function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId,
           " to start."
         ) : React.createElement("span", null, " No bye week wipes out a position.")
       ),
+      (() => {
+        const rows = teams.map((t2, i) => ({
+          i,
+          t: t2,
+          start: LINEUP_SLOTS.reduce((s, k) => s + (t2.slots[k] ? playerPoints(t2.slots[k]) : 0), 0),
+          depth: depthPoints(t2, picks.filter((p) => p.teamIndex === i))
+        }));
+        const byStart = rows.slice().sort((a, b) => b.start - a.start);
+        const byDepth = rows.slice().sort((a, b) => b.depth - a.depth);
+        const myStartRank = byStart.findIndex((r2) => r2.i === userIndex) + 1;
+        const myDepthRank = byDepth.findIndex((r2) => r2.i === userIndex) + 1;
+        const mine2 = rows.find((r2) => r2.i === userIndex);
+        return React.createElement(
+          "div",
+          { className: "done-section" },
+          React.createElement("div", { className: "done-label mono" }, "TWO WAYS TO SCORE IT"),
+          React.createElement(
+            "div",
+            { className: "dual" },
+            React.createElement(
+              "div",
+              { className: "dual-cell" },
+              React.createElement("div", { className: "dual-tag mono" }, "STARTERS"),
+              React.createElement(
+                "div",
+                { className: "dual-grade", style: { color: gradeColor(gradeFromRank(myStartRank, NUM_TEAMS)) } },
+                gradeFromRank(myStartRank, NUM_TEAMS)
+              ),
+              React.createElement("div", { className: "dual-rank" }, ordinal(myStartRank), " of ", NUM_TEAMS),
+              React.createElement("div", { className: "dual-pts mono" }, Math.round(mine2.start), " pts")
+            ),
+            React.createElement(
+              "div",
+              { className: "dual-cell" },
+              React.createElement("div", { className: "dual-tag mono" }, "WITH FLEX DEPTH"),
+              React.createElement(
+                "div",
+                { className: "dual-grade", style: { color: gradeColor(gradeFromRank(myDepthRank, NUM_TEAMS)) } },
+                gradeFromRank(myDepthRank, NUM_TEAMS)
+              ),
+              React.createElement("div", { className: "dual-rank" }, ordinal(myDepthRank), " of ", NUM_TEAMS),
+              React.createElement("div", { className: "dual-pts mono" }, Math.round(mine2.depth), " pts")
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "dual-note" },
+            myDepthRank < myStartRank ? "Your bench backs and receivers move you up \u2014 real depth behind the starters." : myDepthRank > myStartRank ? "Strong starters, thin behind them \u2014 byes will sting." : "Starters and depth tell the same story."
+          )
+        );
+      })(),
       React.createElement(
         "div",
         { className: "done-section" },
@@ -5809,6 +5926,16 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .done-pts { font-size: 12.5px; color: #8FA396; margin-top: 5px; }
 .done-delta-good { color: #7FE3A6; font-weight: 700; }
 .done-delta-bad { color: #E4735A; font-weight: 700; }
+
+.dual { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dual-cell { text-align: center; padding: 12px 6px; border-radius: 12px;
+  background: rgba(255,255,255,0.045); border: 1px solid rgba(241,237,225,0.1); }
+.dual-tag { font-size: 9px; font-weight: 800; letter-spacing: 0.11em; color: #8FA396; }
+.dual-grade { font-family: 'Anton', sans-serif; font-size: 34px; line-height: 1.1; margin: 3px 0 1px; }
+.dual-rank { font-size: 12.5px; font-weight: 600; color: #E6F5EC; }
+.dual-pts { font-size: 11.5px; color: #8FA396; margin-top: 2px; }
+.dual-note { margin-top: 10px; font-size: 12.5px; line-height: 1.5; color: #BFD6C6;
+  background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 12px; }
 .done-section { margin-top: 16px; }
 .done-label { font-size: 9.5px; letter-spacing: 0.16em; color: #7E9A88; font-weight: 700;
   padding-bottom: 6px; border-bottom: 1px solid rgba(150,220,180,0.1); margin-bottom: 9px; }
@@ -6485,6 +6612,13 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .nr-x { background: none; border: none; color: #8FA9C0; font-size: 13px; cursor: pointer; padding: 2px 4px; }
 .nr-label { font-size: 10px; letter-spacing: 0.15em; color: #7690A6; font-weight: 700;
   margin: 16px 0 2px; padding-bottom: 5px; border-bottom: 1px solid rgba(150,190,225,0.14); }
+
+.nr-clocks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 9px; }
+.nr-clock { padding: 11px 0; border-radius: 9px; font-size: 13px; font-weight: 800; cursor: pointer;
+  color: #9FB8CC; background: rgba(255,255,255,0.05); border: 1px solid rgba(150,190,225,0.2); }
+.nr-clock-on { color: #07131f; background: linear-gradient(180deg, #CBE8FF, #6FB4F5);
+  border-color: rgba(190,225,255,0.7); box-shadow: 0 0 12px 2px rgba(96,178,255,0.35); }
+.nr-clock:active { transform: scale(0.96); }
 .nr-go-off { opacity: 0.4; cursor: default; box-shadow: none; }
 .nr-go { width: 100%; margin-top: 18px; min-height: 48px; border-radius: 12px; cursor: pointer;
   font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.1em;
