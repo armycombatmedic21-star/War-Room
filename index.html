@@ -1783,6 +1783,8 @@ const __LOGIC__ = {
   assignToSlot,
   countPos,
   simulateAvailability,
+  compositeWeekly,
+  BYE_WEEKS,
   projectedPoints,
   playerPoints,
   playerVOR,
@@ -1926,7 +1928,13 @@ function computeDraftReport(picks, teams, userIndex) {
       reach: worst && worst.delta <= -8 && (!best || worst.pick !== best.pick) ? worst : null
     };
   });
+  const compAll = teams.map((t, i) => compositeWeekly(picks.filter((p) => p.teamIndex === i).map((p) => p.player)));
+  const compRank = compAll.slice().sort((a, b) => b - a).indexOf(compAll[userIndex]) + 1;
   return {
+    compositePts: compAll[userIndex],
+    compositeRank: compRank,
+    compositeGrade: gradeFromRank(compRank, NUM_TEAMS),
+    compositeAvg: avg(compAll),
     strengthPts: lineupAll[userIndex],
     strengthRank,
     strengthGrade: gradeFromRank(strengthRank, NUM_TEAMS),
@@ -2636,7 +2644,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-065747";
+const APP_VERSION = "20260804-082155";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2658,7 +2666,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.35";
+const APP_RELEASE = "5.2.42";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -4895,17 +4903,81 @@ function RadarChart({ scores, grades, color }) {
     return /* @__PURE__ */ React.createElement("line", { key: a.pos, x1: center, y1: center, x2: x, y2: y, className: "radar-axis" });
   }), /* @__PURE__ */ React.createElement("polygon", { points: dataPath, fill: color, fillOpacity: "0.28", stroke: color, strokeWidth: "2", strokeLinejoin: "round" }), dataPts.map((p, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: p[0], cy: p[1], r: "3.5", fill: color }))), /* @__PURE__ */ React.createElement("div", { className: "radar-labels" }, RADAR_AXES.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.pos, className: "radar-label radar-label-" + a.pos.toLowerCase() }, /* @__PURE__ */ React.createElement(PosTag, { pos: a.pos }), /* @__PURE__ */ React.createElement("span", { className: "radar-label-grade mono", style: { color: gradeColor(grades[a.pos]) } }, grades[a.pos])))));
 }
-function depthPoints(team, picksForTeam) {
-  let pts = 0;
+const SEASON_WEEKS = 18;
+function compositeWeekly(roster) {
+  const perGame = (p) => playerPoints(p) / 17;
+  let total = 0;
+  for (let wk = 1; wk <= SEASON_WEEKS; wk++) {
+    const avail = roster.filter((p) => BYE_WEEKS[p.team] !== wk);
+    const pool = {};
+    ["QB", "RB", "WR", "TE", "K", "DST"].forEach((pos) => {
+      pool[pos] = avail.filter((p) => p.pos === pos).sort((a, b) => perGame(b) - perGame(a));
+    });
+    let wkPts = 0;
+    const take = (pos) => {
+      const p = pool[pos].shift();
+      if (p) {
+        wkPts += perGame(p);
+        return true;
+      }
+      return false;
+    };
+    take("QB");
+    take("RB");
+    take("RB");
+    take("WR");
+    take("WR");
+    take("TE");
+    take("K");
+    take("DST");
+    const flex = [...pool.RB, ...pool.WR].sort((a, b) => perGame(b) - perGame(a))[0];
+    if (flex) wkPts += perGame(flex);
+    total += wkPts;
+  }
+  return total / SEASON_WEEKS;
+}
+function teamWriteup(r, team, picksForTeam, compRank, startRank) {
+  const bits = [];
+  const pos = r.positions.slice().sort((a, b) => a.rank - b.rank);
+  const strong = pos.filter((p) => p.rank <= 4 && p.pos !== "K" && p.pos !== "DST");
+  const weak = pos.filter((p) => p.rank >= NUM_TEAMS - 3 && p.pos !== "K" && p.pos !== "DST");
+  if (compRank <= 3) bits.push("This is a contender.");
+  else if (compRank <= 6) bits.push("A solid, playable roster.");
+  else if (compRank <= 9) bits.push("A middling roster with work to do on the waiver wire.");
+  else bits.push("This roster is going to need help.");
+  if (strong.length) {
+    bits.push("You are strongest at " + strong.slice(0, 2).map((p) => p.pos).join(" and ") + " \u2014 " + ordinal(strong[0].rank) + " in the league at " + strong[0].pos + ".");
+  }
+  if (weak.length) {
+    bits.push("The soft spot is " + weak[weak.length - 1].pos + ", where you rank " + ordinal(weak[weak.length - 1].rank) + ".");
+  }
+  if (compRank < startRank - 1) {
+    bits.push("Your bench is doing real work \u2014 once byes are played out week by week you climb " + (startRank - compRank) + " spots, which means you drafted genuine cover rather than names.");
+  } else if (compRank > startRank + 1) {
+    bits.push("Your starters flatter you. Counting byes week by week you fall " + (compRank - startRank) + " spots, so the lineup is top-heavy and a single bye week will hurt.");
+  } else {
+    bits.push("Starters and depth agree, so what you see in the lineup is roughly what you will field all season.");
+  }
+  const graded = picksForTeam.filter((p) => p.player.adp != null && !p.player.adpEstimated);
+  if (graded.length >= 5) {
+    const avgGap = graded.reduce((s, p) => s + (p.pickNumber - p.player.adp), 0) / graded.length;
+    if (avgGap > 6) bits.push("You consistently let the board come to you, taking players an average of " + Math.round(avgGap) + " picks after their market slot.");
+    else if (avgGap < -6) bits.push("You reached repeatedly, going an average of " + Math.round(-avgGap) + " picks ahead of the board \u2014 conviction that only pays if your reads are better than the market.");
+  }
+  const holes = {};
   LINEUP_SLOTS.forEach((k) => {
-    if (team.slots[k]) pts += playerPoints(team.slots[k]);
+    const pl = team.slots[k];
+    if (!pl) return;
+    const b = BYE_WEEKS[pl.team];
+    if (!b) return;
+    holes[b] = holes[b] || [];
+    holes[b].push(pl.pos);
   });
-  const starterIds = new Set(LINEUP_SLOTS.map((k) => team.slots[k]).filter(Boolean).map((p) => p.id));
-  picksForTeam.forEach((p) => {
-    if (starterIds.has(p.player.id)) return;
-    if (p.player.pos === "RB" || p.player.pos === "WR") pts += playerPoints(p.player);
-  });
-  return pts;
+  const worstWeek = Object.keys(holes).sort((a, b) => holes[b].length - holes[a].length)[0];
+  if (worstWeek && holes[worstWeek].length >= 3) {
+    bits.push("Week " + worstWeek + " is your problem week with " + holes[worstWeek].length + " starters out \u2014 plan for it before it arrives.");
+  }
+  return bits.join(" ");
 }
 function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId, roomSeats }) {
   const [copied, setCopied] = useState(false);
@@ -4971,11 +5043,43 @@ function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId,
     React.createElement(
       "div",
       { className: "done-card" },
+      (() => {
+        const rowsH = teams.map((t2, i) => ({ i, v: compositeWeekly(picks.filter((p) => p.teamIndex === i).map((p) => p.player)) }));
+        const sortedH = rowsH.slice().sort((a, b) => b.v - a.v);
+        const rankH = sortedH.findIndex((x) => x.i === userIndex) + 1;
+        const mineH = rowsH.find((x) => x.i === userIndex);
+        const avgH = rowsH.reduce((s, x) => s + x.v, 0) / rowsH.length;
+        return React.createElement(
+          "div",
+          { className: "done-hero" },
+          React.createElement("div", { className: "done-kicker mono" }, "DRAFT COMPLETE"),
+          React.createElement(
+            "div",
+            { className: "done-grade", style: { color: gradeColor(gradeFromRank(rankH, NUM_TEAMS)) } },
+            gradeFromRank(rankH, NUM_TEAMS)
+          ),
+          React.createElement("div", { className: "done-rank" }, ordinal(rankH), " of ", NUM_TEAMS, " composite"),
+          React.createElement(
+            "div",
+            { className: "done-pts mono" },
+            Math.round(mineH.v),
+            " pts/week",
+            React.createElement(
+              "span",
+              { className: mineH.v - avgH >= 0 ? "done-delta-good" : "done-delta-bad" },
+              "  ",
+              mineH.v - avgH >= 0 ? "+" : "",
+              Math.round(mineH.v - avgH),
+              " vs avg"
+            )
+          )
+        );
+      })(),
       React.createElement(
         "div",
-        { className: "done-hero" },
-        React.createElement("div", { className: "done-kicker mono" }, "DRAFT COMPLETE"),
-        React.createElement("div", { className: "done-grade", style: { color: gradeColor(r.strengthGrade) } }, r.strengthGrade),
+        { className: "done-hero done-hero-off" },
+        React.createElement("div", { className: "done-kicker mono" }, "STARTERS ONLY"),
+        React.createElement("div", { className: "done-grade done-grade-sm", style: { color: gradeColor(r.strengthGrade) } }, r.strengthGrade),
         React.createElement("div", { className: "done-rank" }, ordinal(r.strengthRank), " of ", NUM_TEAMS, " projected"),
         React.createElement(
           "div",
@@ -5093,7 +5197,7 @@ function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId,
           i,
           t: t2,
           start: LINEUP_SLOTS.reduce((s, k) => s + (t2.slots[k] ? playerPoints(t2.slots[k]) : 0), 0),
-          depth: depthPoints(t2, picks.filter((p) => p.teamIndex === i))
+          depth: compositeWeekly(picks.filter((p) => p.teamIndex === i).map((p) => p.player))
         }));
         const byStart = rows.slice().sort((a, b) => b.start - a.start);
         const byDepth = rows.slice().sort((a, b) => b.depth - a.depth);
@@ -5122,23 +5226,39 @@ function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId,
             React.createElement(
               "div",
               { className: "dual-cell" },
-              React.createElement("div", { className: "dual-tag mono" }, "WITH FLEX DEPTH"),
+              React.createElement("div", { className: "dual-tag mono" }, "COMPOSITE"),
               React.createElement(
                 "div",
                 { className: "dual-grade", style: { color: gradeColor(gradeFromRank(myDepthRank, NUM_TEAMS)) } },
                 gradeFromRank(myDepthRank, NUM_TEAMS)
               ),
               React.createElement("div", { className: "dual-rank" }, ordinal(myDepthRank), " of ", NUM_TEAMS),
-              React.createElement("div", { className: "dual-pts mono" }, Math.round(mine2.depth), " pts")
+              React.createElement("div", { className: "dual-pts mono" }, Math.round(mine2.depth), " pts/week")
             )
           ),
           React.createElement(
             "div",
             { className: "dual-note" },
-            myDepthRank < myStartRank ? "Your bench backs and receivers move you up \u2014 real depth behind the starters." : myDepthRank > myStartRank ? "Strong starters, thin behind them \u2014 byes will sting." : "Starters and depth tell the same story."
+            myDepthRank < myStartRank ? "Your bench covers byes well \u2014 you move up once the season is played out week by week." : myDepthRank > myStartRank ? "Strong starters, but stacked byes leave holes \u2014 you slip once byes are counted." : "Starters and composite tell the same story."
           )
         );
       })(),
+      React.createElement(
+        "div",
+        { className: "done-section" },
+        React.createElement("div", { className: "done-label mono" }, "THE VERDICT"),
+        React.createElement(
+          "div",
+          { className: "verdict" },
+          teamWriteup(
+            r,
+            teams[userIndex],
+            mine,
+            teams.map((t2, i) => ({ i, v: compositeWeekly(picks.filter((p) => p.teamIndex === i).map((p) => p.player)) })).sort((a, b) => b.v - a.v).findIndex((x) => x.i === userIndex) + 1,
+            r.strengthRank
+          )
+        )
+      ),
       React.createElement(
         "div",
         { className: "done-section" },
@@ -5214,13 +5334,13 @@ function GradeTab({ picks, userSlot, teams }) {
     return /* @__PURE__ */ React.createElement("div", { className: "empty-note" }, "Make a few picks to see your draft grade.");
   }
   const r = computeDraftReport(picks, teams, userIndex);
-  const vsAvg = r.strengthPts - r.leagueAvgPts;
+  const vsAvg = r.compositePts - r.compositeAvg;
   const scores = {}, grades = {};
   r.positions.forEach((p) => {
     scores[p.pos] = GRADE_SCORE[p.grade] ?? 0;
     grades[p.pos] = p.grade;
   });
-  return /* @__PURE__ */ React.createElement("div", { className: "grade-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "grade-hero", style: GLASS_CARD_STYLE }, /* @__PURE__ */ React.createElement(GradeRing, { grade: r.strengthGrade }), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-body" }, /* @__PURE__ */ React.createElement("div", { className: "grade-hero-label mono" }, "ROSTER STRENGTH"), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-value" }, Math.round(r.strengthPts), /* @__PURE__ */ React.createElement("span", { className: "grade-hero-unit" }, " proj pts")), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-sub" }, /* @__PURE__ */ React.createElement("span", { className: vsAvg >= 0 ? "delta-good" : "delta-bad" }, vsAvg >= 0 ? "+" : "", Math.round(vsAvg)), /* @__PURE__ */ React.createElement("span", { className: "muted" }, " vs league average (", Math.round(r.leagueAvgPts), ")")), /* @__PURE__ */ React.createElement("div", { className: "grade-rank-pill" }, ordinal(r.strengthRank), " of ", NUM_TEAMS))), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-card", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-bar-head" }, /* @__PURE__ */ React.createElement("span", { className: "mono small muted" }, "STARTING LINEUP"), /* @__PURE__ */ React.createElement("span", { className: "mono small muted" }, "BEST IN LEAGUE ", Math.round(r.bestPts))), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-track" }, /* @__PURE__ */ React.createElement("div", { className: "grade-bar-fill", style: { width: Math.max(4, Math.min(100, r.strengthPts / (r.bestPts || 1) * 100)) + "%" } }), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-avg", style: { left: Math.min(100, r.leagueAvgPts / (r.bestPts || 1) * 100) + "%" } })), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-foot muted small" }, "Marker shows league average")), /* @__PURE__ */ React.createElement("div", { className: "grade-secondary", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-sec-item" }, /* @__PURE__ */ React.createElement("div", { className: "mono small muted" }, "DRAFT VALUE"), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-value", style: { color: gradeColor(r.valueGrade) } }, r.valueGrade), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, r.valueAvg === null ? "\u2014" : `${r.valueAvg >= 0 ? "+" : ""}${r.valueAvg.toFixed(1)} vs ADP`)), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-divider" }), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-item" }, /* @__PURE__ */ React.createElement("div", { className: "mono small muted" }, "VALUE RANK"), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-value" }, r.valueRank ? ordinal(r.valueRank) : "\u2014"), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "of ", NUM_TEAMS, " teams"))), r.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "grade-alerts" }, r.alerts.map((a, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "grade-alert grade-alert-" + a.level }, /* @__PURE__ */ React.createElement("span", { className: "note-dot " + (a.level === "bad" ? "note-dot-bad" : "note-dot-warn") }), a.text))), /* @__PURE__ */ React.createElement(RadarChart, { scores, grades, color: gradeColor(r.strengthGrade) }), /* @__PURE__ */ React.createElement("div", { className: "grade-positions" }, r.positions.map((g) => /* @__PURE__ */ React.createElement("div", { key: g.pos, className: "grade-row", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-row-head" }, /* @__PURE__ */ React.createElement(PosTag, { pos: g.pos }), /* @__PURE__ */ React.createElement("span", { className: "grade-row-badge", style: { color: gradeColor(g.grade) } }, g.grade), /* @__PURE__ */ React.createElement("span", { className: "grade-row-pts mono" }, Math.round(g.pts), " pts"), /* @__PURE__ */ React.createElement("span", { className: "grade-row-rank muted small" }, ordinal(g.rank), " of ", NUM_TEAMS)), g.starters.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "grade-starters" }, g.starters.map((pl, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "grade-starter-line" }, /* @__PURE__ */ React.createElement("span", { className: "grade-starter-name" }, pl.name), /* @__PURE__ */ React.createElement("span", { className: "grade-starter-pts mono" }, Math.round(playerPoints(pl)))))) : /* @__PURE__ */ React.createElement("div", { className: "grade-row-notes muted small" }, "No starter at this position"), (g.best || g.reach) && /* @__PURE__ */ React.createElement("div", { className: "grade-row-notes" }, g.best && /* @__PURE__ */ React.createElement("div", { className: "grade-note-line" }, /* @__PURE__ */ React.createElement("span", { className: "note-dot note-dot-good" }), "Value: ", g.best.pick.player.name, " \u2014 pick ", g.best.pick.pickNumber, ", ADP ", g.best.pick.player.adp, " (+", g.best.delta, ")"), g.reach && /* @__PURE__ */ React.createElement("div", { className: "grade-note-line" }, /* @__PURE__ */ React.createElement("span", { className: "note-dot note-dot-bad" }), "Reach: ", g.reach.pick.player.name, " \u2014 pick ", g.reach.pick.pickNumber, ", ADP ", g.reach.pick.player.adp, " (", g.reach.delta, ")")), g.count > g.starters.length && /* @__PURE__ */ React.createElement("div", { className: "grade-bench muted small" }, "+", g.count - g.starters.length, " on bench")))));
+  return /* @__PURE__ */ React.createElement("div", { className: "grade-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "grade-hero", style: GLASS_CARD_STYLE }, /* @__PURE__ */ React.createElement(GradeRing, { grade: r.compositeGrade }), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-body" }, /* @__PURE__ */ React.createElement("div", { className: "grade-hero-label mono" }, "COMPOSITE \xB7 " + ordinal(r.compositeRank) + " of " + NUM_TEAMS), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-value" }, Math.round(r.compositePts), /* @__PURE__ */ React.createElement("span", { className: "grade-hero-unit" }, " pts/week")), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-sub" }, /* @__PURE__ */ React.createElement("span", { className: vsAvg >= 0 ? "delta-good" : "delta-bad" }, vsAvg >= 0 ? "+" : "", Math.round(vsAvg)), /* @__PURE__ */ React.createElement("span", { className: "muted" }, " vs league average (", Math.round(r.compositeAvg), ")")), /* @__PURE__ */ React.createElement("div", { className: "grade-rank-pill" }, ordinal(r.strengthRank), " of ", NUM_TEAMS))), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-card", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-bar-head" }, /* @__PURE__ */ React.createElement("span", { className: "mono small muted" }, "STARTING LINEUP"), /* @__PURE__ */ React.createElement("span", { className: "mono small muted" }, "BEST IN LEAGUE ", Math.round(r.bestPts))), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-track" }, /* @__PURE__ */ React.createElement("div", { className: "grade-bar-fill", style: { width: Math.max(4, Math.min(100, r.strengthPts / (r.bestPts || 1) * 100)) + "%" } }), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-avg", style: { left: Math.min(100, r.leagueAvgPts / (r.bestPts || 1) * 100) + "%" } })), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-foot muted small" }, "Marker shows league average")), /* @__PURE__ */ React.createElement("div", { className: "grade-secondary", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-sec-item" }, /* @__PURE__ */ React.createElement("div", { className: "mono small muted" }, "DRAFT VALUE"), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-value", style: { color: gradeColor(r.valueGrade) } }, r.valueGrade), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, r.valueAvg === null ? "\u2014" : `${r.valueAvg >= 0 ? "+" : ""}${r.valueAvg.toFixed(1)} vs ADP`)), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-divider" }), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-item" }, /* @__PURE__ */ React.createElement("div", { className: "mono small muted" }, "VALUE RANK"), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-value" }, r.valueRank ? ordinal(r.valueRank) : "\u2014"), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "of ", NUM_TEAMS, " teams"))), r.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "grade-alerts" }, r.alerts.map((a, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "grade-alert grade-alert-" + a.level }, /* @__PURE__ */ React.createElement("span", { className: "note-dot " + (a.level === "bad" ? "note-dot-bad" : "note-dot-warn") }), a.text))), /* @__PURE__ */ React.createElement(RadarChart, { scores, grades, color: gradeColor(r.strengthGrade) }), /* @__PURE__ */ React.createElement("div", { className: "grade-positions" }, r.positions.map((g) => /* @__PURE__ */ React.createElement("div", { key: g.pos, className: "grade-row", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-row-head" }, /* @__PURE__ */ React.createElement(PosTag, { pos: g.pos }), /* @__PURE__ */ React.createElement("span", { className: "grade-row-badge", style: { color: gradeColor(g.grade) } }, g.grade), /* @__PURE__ */ React.createElement("span", { className: "grade-row-pts mono" }, Math.round(g.pts), " pts"), /* @__PURE__ */ React.createElement("span", { className: "grade-row-rank muted small" }, ordinal(g.rank), " of ", NUM_TEAMS)), g.starters.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "grade-starters" }, g.starters.map((pl, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "grade-starter-line" }, /* @__PURE__ */ React.createElement("span", { className: "grade-starter-name" }, pl.name), /* @__PURE__ */ React.createElement("span", { className: "grade-starter-pts mono" }, Math.round(playerPoints(pl)))))) : /* @__PURE__ */ React.createElement("div", { className: "grade-row-notes muted small" }, "No starter at this position"), (g.best || g.reach) && /* @__PURE__ */ React.createElement("div", { className: "grade-row-notes" }, g.best && /* @__PURE__ */ React.createElement("div", { className: "grade-note-line" }, /* @__PURE__ */ React.createElement("span", { className: "note-dot note-dot-good" }), "Value: ", g.best.pick.player.name, " \u2014 pick ", g.best.pick.pickNumber, ", ADP ", g.best.pick.player.adp, " (+", g.best.delta, ")"), g.reach && /* @__PURE__ */ React.createElement("div", { className: "grade-note-line" }, /* @__PURE__ */ React.createElement("span", { className: "note-dot note-dot-bad" }), "Reach: ", g.reach.pick.player.name, " \u2014 pick ", g.reach.pick.pickNumber, ", ADP ", g.reach.pick.player.adp, " (", g.reach.delta, ")")), g.count > g.starters.length && /* @__PURE__ */ React.createElement("div", { className: "grade-bench muted small" }, "+", g.count - g.starters.length, " on bench")))));
 }
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -5918,6 +6038,8 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
   border: 1px solid rgba(92,214,140,0.4);
   box-shadow: 0 24px 70px rgba(0,0,0,0.7), 0 0 40px 6px rgba(60,190,115,0.18);
   animation: sheetUp 0.35s cubic-bezier(0.16,1,0.3,1); }
+.done-hero-off { padding-top: 12px; margin-top: 12px; opacity: 0.72; }
+.done-grade-sm { font-size: 34px !important; }
 .done-hero { text-align: center; padding-bottom: 16px; border-bottom: 1px solid rgba(150,220,180,0.14); }
 .done-kicker { font-size: 11px; font-weight: 800; letter-spacing: 0.2em; color: #8FD6AE; }
 .done-grade { font-size: 62px; font-weight: 800; line-height: 1.05; margin: 4px 0 2px;
@@ -5927,6 +6049,9 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .done-delta-good { color: #7FE3A6; font-weight: 700; }
 .done-delta-bad { color: #E4735A; font-weight: 700; }
 
+.verdict { font-size: 14.5px; line-height: 1.62; color: #DCE9E0;
+  background: rgba(255,255,255,0.045); border: 1px solid rgba(241,237,225,0.1);
+  border-radius: 12px; padding: 14px 15px; }
 .dual { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .dual-cell { text-align: center; padding: 12px 6px; border-radius: 12px;
   background: rgba(255,255,255,0.045); border: 1px solid rgba(241,237,225,0.1); }
