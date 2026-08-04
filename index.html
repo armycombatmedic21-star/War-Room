@@ -1982,6 +1982,44 @@ function matchesFilter(pos, filter) {
   if (filter === "FLEX") return pos === "RB" || pos === "WR";
   return pos === filter;
 }
+class Boundary extends React.Component {
+  constructor(p) {
+    super(p);
+    this.state = { err: null };
+  }
+  static getDerivedStateFromError(err) {
+    return { err };
+  }
+  componentDidCatch(err, info) {
+    try {
+      console.error("render error", err, info);
+    } catch (e) {
+    }
+  }
+  render() {
+    if (!this.state.err) return this.props.children;
+    return React.createElement(
+      "div",
+      { className: "crash" },
+      React.createElement(
+        "div",
+        { className: "crash-card" },
+        React.createElement("div", { className: "crash-title mono" }, "SOMETHING GLITCHED"),
+        React.createElement(
+          "div",
+          { className: "crash-body" },
+          "Your draft is saved. Reload to pick up where you left off."
+        ),
+        React.createElement("button", { className: "crash-btn", onClick: () => location.reload() }, "RELOAD"),
+        React.createElement(
+          "div",
+          { className: "crash-detail mono" },
+          String(this.state.err && this.state.err.message || this.state.err).slice(0, 140)
+        )
+      )
+    );
+  }
+}
 function NFLDraftSimulator() {
   const [phase, setPhase] = useState("setup");
   const [userSlot, setUserSlot] = useState(null);
@@ -2049,10 +2087,12 @@ function NFLDraftSimulator() {
     const byId = new Map(PLAYERS.map((p) => [p.id, p]));
     return net.onPicks(roomId, (list) => {
       const rebuilt = [];
-      list.forEach((row) => {
+      list.slice().sort((a, b) => a.pickNumber - b.pickNumber).forEach((row) => {
         const pl = byId.get(row.playerId);
-        if (!pl) return;
-        const pn = row.pickNumber;
+        const pn = Number(row.pickNumber);
+        if (!pl || !pn || pn < 1 || pn > TOTAL_PICKS) return;
+        if (rebuilt.length && pn !== rebuilt[rebuilt.length - 1].pickNumber + 1) return;
+        if (!rebuilt.length && pn !== 1) return;
         rebuilt.push({
           round: Math.ceil(pn / NUM_TEAMS),
           pickNumber: pn,
@@ -2266,7 +2306,9 @@ function NFLDraftSimulator() {
   }, [roomId, pickNumber]);
   function makePick(player) {
     if (roomId) {
-      net.writePick(roomId, picks.length + 1, player.id, roomUser || null);
+      const nextPn = picks.reduce((m, p) => Math.max(m, p.pickNumber), 0) + 1;
+      if (nextPn > TOTAL_PICKS) return;
+      net.writePick(roomId, nextPn, player.id, roomUser || null);
       return;
     }
     setPicks((prev) => {
@@ -2668,7 +2710,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-093846";
+const APP_VERSION = "20260804-115914";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2690,7 +2732,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.45";
+const APP_RELEASE = "5.2.60";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -2874,7 +2916,8 @@ const net = {
         const now = Date.now();
         all.forEach((r) => {
           if (r.players.length + r.spectators.length > 0) return;
-          if (r.status === "drafting") return;
+          const idleLimit = r.status === "drafting" ? 45 * 60 * 1e3 : GRACE;
+          if (now - (r.lastPickAt || r.startedAt || r.createdAt || now) < idleLimit) return;
           const age = now - (r.createdAt || now);
           const idle = now - (r.startedAt || r.createdAt || now);
           if (age > GRACE && idle > GRACE) {
@@ -3084,8 +3127,9 @@ const net = {
   },
   writePick(id, pickNumber, playerId, by) {
     whenReady(() => {
-      const { ref, set } = FB.api;
+      const { ref, set, update } = FB.api;
       set(ref(FB.db, "rooms/" + id + "/picks/" + pickNumber), { p: playerId, by: by || null, at: Date.now() });
+      update(ref(FB.db, "rooms/" + id), { lastPickAt: Date.now() });
     });
   },
   // Commissioner heartbeat. If it goes stale another client takes over CPU
@@ -3255,7 +3299,7 @@ function VersionPanel({ open, onClose }) {
     ) : null
   );
 }
-function MiniBoard({ picks, teams, userSlot, pickNumber, roomSeats }) {
+const MiniBoard = React.memo(function MiniBoard2({ picks, teams, userSlot, pickNumber, roomSeats }) {
   const [open, setOpen] = useState(true);
   const wrapRef = useRef(null);
   const round = Math.ceil(Math.max(1, pickNumber) / NUM_TEAMS);
@@ -3340,7 +3384,7 @@ function MiniBoard({ picks, teams, userSlot, pickNumber, roomSeats }) {
       )
     ) : null
   );
-}
+}, (a, b) => a.pickNumber === b.pickNumber && a.picks.length === b.picks.length && a.roomSeats === b.roomSeats);
 function ChatPanel({ messages, username, onSend, label, compact }) {
   const [msg, setMsg] = useState("");
   const feedRef = useRef(null);
@@ -3726,7 +3770,7 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
   }, [chatOpen, roomChat.length]);
   useEffect(() => net.onRoom(roomId, setRoom), [roomId]);
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 250);
+    const t = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(t);
   }, []);
   const seats = room && room.seats || {};
@@ -4939,6 +4983,7 @@ function RadarChart({ scores, grades, color }) {
 }
 const SEASON_WEEKS = 18;
 function compositeWeekly(roster) {
+  if (!roster || !roster.length) return 0;
   const perGame = (p) => playerPoints(p) / 17;
   let total = 0;
   for (let wk = 1; wk <= SEASON_WEEKS; wk++) {
@@ -4958,7 +5003,6 @@ function compositeWeekly(roster) {
     };
     take("QB");
     take("RB");
-    take("RB");
     take("WR");
     take("WR");
     take("TE");
@@ -4970,33 +5014,69 @@ function compositeWeekly(roster) {
   }
   return total / SEASON_WEEKS;
 }
-function teamWriteup(r, team, picksForTeam, compRank, startRank) {
-  const bits = [];
-  const pos = r.positions.slice().sort((a, b) => a.rank - b.rank);
-  const strong = pos.filter((p) => p.rank <= 4 && p.pos !== "K" && p.pos !== "DST");
-  const weak = pos.filter((p) => p.rank >= NUM_TEAMS - 3 && p.pos !== "K" && p.pos !== "DST");
-  if (compRank <= 3) bits.push("This is a contender.");
-  else if (compRank <= 6) bits.push("A solid, playable roster.");
-  else if (compRank <= 9) bits.push("A middling roster with work to do on the waiver wire.");
-  else bits.push("This roster is going to need help.");
-  if (strong.length) {
-    bits.push("You are strongest at " + strong.slice(0, 2).map((p) => p.pos).join(" and ") + " \u2014 " + ordinal(strong[0].rank) + " in the league at " + strong[0].pos + ".");
+function teamWriteup(r, team, picksForTeam, compRank, startRank, allTeams, allPicks) {
+  if (!r || !team || !team.slots) return [];
+  const seed = Math.abs(picksForTeam.reduce((s, p) => s + String(p.player.id).length * p.pickNumber, 0)) || 1;
+  const pickOne = (arr) => arr && arr.length ? arr[Math.abs(seed) % arr.length] : "";
+  const paras = [];
+  const pos = (r.positions || []).slice().sort((a, b) => a.rank - b.rank);
+  const skill = pos.filter((p) => p.pos !== "K" && p.pos !== "DST");
+  const strong = skill.filter((p) => p.rank <= 4);
+  const weak = skill.filter((p) => p.rank >= NUM_TEAMS - 3);
+  const mid = skill.filter((p) => p.rank > 4 && p.rank < NUM_TEAMS - 3);
+  const openers = {
+    elite: [
+      "This is the best roster in the room, and it is not especially close.",
+      "You won this draft. The board broke your way and you did not waste it.",
+      "A genuinely dangerous team \u2014 the kind that makes the rest of the league recalculate."
+    ],
+    good: [
+      "A contender. There is real quality here and a clear path to the playoffs.",
+      "Strong roster. You will be favoured most weeks and you have room to absorb a bad one.",
+      "This is a playoff team on paper, built on a solid spine rather than one lucky pick."
+    ],
+    mid: [
+      "A middle-of-the-pack roster \u2014 competitive, but you will have to manage it actively.",
+      "Serviceable. Nothing here loses you the season, but nothing wins it outright either.",
+      "You are in the mix. The difference between fourth and eighth will come down to waivers."
+    ],
+    poor: [
+      "This roster needs work. You are starting the season behind and you will feel it.",
+      "A tough draft. There is a foundation to build on, but it needs help quickly.",
+      "You came out light. Expect to be streaming and trading from week one."
+    ]
+  };
+  const tier = compRank <= 2 ? "elite" : compRank <= 5 ? "good" : compRank <= 9 ? "mid" : "poor";
+  let p1 = pickOne(openers[tier]);
+  p1 += " You finished " + ordinal(compRank) + " of " + NUM_TEAMS + " on composite scoring at " + Math.round(r.compositePts) + " points per week, " + (r.compositePts >= r.compositeAvg ? "about " + Math.round(r.compositePts - r.compositeAvg) + " above the league average" : "roughly " + Math.round(r.compositeAvg - r.compositePts) + " below the league average") + ".";
+  paras.push(p1);
+  let p2 = "";
+  if (strong.length >= 2) {
+    p2 += "The strength of this team is " + strong.slice(0, 2).map((x) => x.pos).join(" and ") + ". You are " + ordinal(strong[0].rank) + " at " + strong[0].pos + " and " + ordinal(strong[1].rank) + " at " + strong[1].pos + ", which means you can win matchups without needing everything to break right.";
+  } else if (strong.length === 1) {
+    p2 += "Everything runs through your " + strong[0].pos + " group, where you rank " + ordinal(strong[0].rank) + ". That is a real edge, but it is a narrow one \u2014 an injury there costs you the season.";
+  } else {
+    p2 += "There is no standout position on this roster. You are not first at anything, which means you win on consistency rather than any single advantage.";
   }
   if (weak.length) {
-    bits.push("The soft spot is " + weak[weak.length - 1].pos + ", where you rank " + ordinal(weak[weak.length - 1].rank) + ".");
+    const w = weak[weak.length - 1];
+    p2 += " The obvious hole is " + w.pos + ", where you sit " + ordinal(w.rank) + " of " + NUM_TEAMS + ". " + pickOne([
+      "That is the position to target first on waivers.",
+      "Fixing that should be your first trade conversation.",
+      "You will be streaming there until something better appears."
+    ]);
+  } else if (mid.length >= 3) {
+    p2 += " Nothing is broken \u2014 every position lands in the middle, which is a balanced build rather than a flawed one.";
   }
-  if (compRank < startRank - 1) {
-    bits.push("Your bench is doing real work \u2014 once byes are played out week by week you climb " + (startRank - compRank) + " spots, which means you drafted genuine cover rather than names.");
-  } else if (compRank > startRank + 1) {
-    bits.push("Your starters flatter you. Counting byes week by week you fall " + (compRank - startRank) + " spots, so the lineup is top-heavy and a single bye week will hurt.");
+  paras.push(p2);
+  let p3 = "";
+  const swing = startRank - compRank;
+  if (swing >= 2) {
+    p3 += "Your bench is the quiet story here. On starters alone you rank " + ordinal(startRank) + ", but once the season is played out week by week with byes applied you climb to " + ordinal(compRank) + ". That is " + swing + " places bought with depth, which means you drafted genuine cover rather than names you will never start.";
+  } else if (swing <= -2) {
+    p3 += "This roster is top-heavy. Your starters rank " + ordinal(startRank) + ", but counting byes week by week you fall to " + ordinal(compRank) + ". The lineup looks better than the team \u2014 a single bye week or one injury and you are starting somebody you did not plan to.";
   } else {
-    bits.push("Starters and depth agree, so what you see in the lineup is roughly what you will field all season.");
-  }
-  const graded = picksForTeam.filter((p) => p.player.adp != null && !p.player.adpEstimated);
-  if (graded.length >= 5) {
-    const avgGap = graded.reduce((s, p) => s + (p.pickNumber - p.player.adp), 0) / graded.length;
-    if (avgGap > 6) bits.push("You consistently let the board come to you, taking players an average of " + Math.round(avgGap) + " picks after their market slot.");
-    else if (avgGap < -6) bits.push("You reached repeatedly, going an average of " + Math.round(-avgGap) + " picks ahead of the board \u2014 conviction that only pays if your reads are better than the market.");
+    p3 += "Starters and depth tell the same story, so what you see in your lineup is roughly what you will field all season. No hidden ballast, no hidden fragility.";
   }
   const holes = {};
   LINEUP_SLOTS.forEach((k) => {
@@ -5004,19 +5084,72 @@ function teamWriteup(r, team, picksForTeam, compRank, startRank) {
     if (!pl) return;
     const b = BYE_WEEKS[pl.team];
     if (!b) return;
-    holes[b] = holes[b] || [];
-    holes[b].push(pl.pos);
+    (holes[b] = holes[b] || []).push(pl.pos);
   });
-  const worstWeek = Object.keys(holes).sort((a, b) => holes[b].length - holes[a].length)[0];
-  if (worstWeek && holes[worstWeek].length >= 3) {
-    bits.push("Week " + worstWeek + " is your problem week with " + holes[worstWeek].length + " starters out \u2014 plan for it before it arrives.");
+  const worst = Object.keys(holes).sort((a, b) => holes[b].length - holes[a].length)[0];
+  if (worst && holes[worst].length >= 3) {
+    p3 += " Week " + worst + " is the one to circle: " + holes[worst].length + " starters are out at once (" + holes[worst].join(", ") + "). Plan for that week before it arrives rather than during it.";
+  } else if (worst && holes[worst].length === 2) {
+    p3 += " Week " + worst + " costs you two starters, which is manageable but worth noting now.";
   }
-  return bits.join(" ");
+  paras.push(p3);
+  const graded = picksForTeam.filter((p) => p.player.adp != null && !p.player.adpEstimated);
+  if (graded.length >= 5) {
+    const gaps = graded.map((p) => p.pickNumber - p.player.adp);
+    const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+    const swings = gaps.filter((g) => Math.abs(g) >= 12).length;
+    let p4 = "";
+    if (avgGap > 6) {
+      p4 += "You drafted patiently, taking players an average of " + Math.round(avgGap) + " picks after the market did. " + pickOne([
+        "That is how value accumulates \u2014 you let the board come to you rather than chasing it.",
+        "Discipline like that compounds: every pick that falls to you is a pick someone else paid up for."
+      ]);
+    } else if (avgGap < -6) {
+      p4 += "You reached repeatedly, going an average of " + Math.round(-avgGap) + " picks ahead of the board. " + pickOne([
+        "That only pays if your reads are genuinely better than the consensus \u2014 otherwise you paid a premium for players who were coming to you anyway.",
+        "Conviction drafting. It wins big when you are right and looks careless when you are not."
+      ]);
+    } else {
+      p4 += "You drafted close to the board, within a few picks of market value most of the time. That is a low-variance approach: you will rarely be embarrassed by a pick, and rarely steal one either.";
+    }
+    if (swings >= 4) {
+      p4 += " You did swing hard on " + swings + " picks, so this was not a purely mechanical draft \u2014 there were real opinions in it.";
+    }
+    if (r.best) {
+      p4 += " Your best piece of business was " + r.best.player.name + " at pick " + r.best.pick + ", " + Math.round(r.best.delta) + " picks after the board said he should have gone.";
+    }
+    if (r.reach) {
+      p4 += " The one to defend is " + r.reach.player.name + " at " + r.reach.pick + ", taken " + Math.round(-r.reach.delta) + " picks early.";
+    }
+    paras.push(p4);
+  }
+  let p5 = "";
+  const rbCount = picksForTeam.filter((p) => p.player.pos === "RB").length;
+  const wrCount = picksForTeam.filter((p) => p.player.pos === "WR").length;
+  if (rbCount >= 6) p5 += "You came out of this with " + rbCount + " running backs, which is genuine trade capital \u2014 somebody in this league will get desperate at that position by October. ";
+  else if (rbCount <= 3) p5 += "With only " + rbCount + " running backs you are one injury from a problem. Handcuffs and waiver claims matter more for you than for anyone else in the room. ";
+  if (wrCount >= 7) p5 += "Seven-plus receivers is more than you can start; package two of them for a position of need rather than letting them rot on your bench. ";
+  p5 += tier === "poor" ? "Be aggressive early. A roster like this does not improve by standing still." : tier === "elite" ? "The main risk now is complacency \u2014 protect what you have and do not overpay to fix a position that is only marginally weak." : "Play the waiver wire hard in the first month; this roster has enough in it to move up with one or two good adds.";
+  paras.push(p5);
+  return paras;
 }
 function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId, roomSeats, embedded }) {
   const [copied, setCopied] = useState(false);
   const [peek, setPeek] = useState(null);
   const userIndex = userSlot - 1;
+  if (!teams || !teams[userIndex] || !teams[userIndex].slots) {
+    return React.createElement(
+      "div",
+      { className: embedded ? "done-embed" : "done-backdrop" },
+      React.createElement(
+        "div",
+        { className: "done-card" + (embedded ? " done-card-embed" : "") },
+        React.createElement("div", { className: "done-kicker mono" }, "DRAFT COMPLETE"),
+        React.createElement("div", { className: "done-note" }, "No roster to grade for this seat."),
+        embedded ? null : React.createElement("button", { className: "done-close", onClick: onClose }, "CLOSE")
+      )
+    );
+  }
   const r = computeDraftReport(picks, teams, userIndex);
   const mine = picks.filter((p) => p.teamIndex === userIndex);
   const withDelta = mine.filter((p) => p.player.adp != null && !p.player.adpEstimated).map((p) => ({ p, delta: p.player.adp - p.pickNumber }));
@@ -5289,8 +5422,10 @@ function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId,
             teams[userIndex],
             mine,
             teams.map((t2, i) => ({ i, v: compositeWeekly(picks.filter((p) => p.teamIndex === i).map((p) => p.player)) })).sort((a, b) => b.v - a.v).findIndex((x) => x.i === userIndex) + 1,
-            r.strengthRank
-          )
+            r.strengthRank,
+            teams,
+            picks
+          ).map((para, i) => React.createElement("p", { key: i, className: "verdict-p" }, para))
         )
       ),
       React.createElement(
@@ -6090,6 +6225,8 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .done-delta-good { color: #7FE3A6; font-weight: 700; }
 .done-delta-bad { color: #E4735A; font-weight: 700; }
 
+.verdict-p { margin: 0 0 12px; }
+.verdict-p:last-child { margin-bottom: 0; }
 .verdict { font-size: 14.5px; line-height: 1.62; color: #DCE9E0;
   background: rgba(255,255,255,0.045); border: 1px solid rgba(241,237,225,0.1);
   border-radius: 12px; padding: 14px 15px; }
@@ -6856,6 +6993,18 @@ input, select, textarea { font-size: 16px; }
   font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 800; letter-spacing: 0.1em;
   color: #2A0D07; background: linear-gradient(180deg, #FFB3A0, #E4553A);
   border: 1.5px solid rgba(255,200,185,0.7); }
+
+.crash { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px;
+  background: radial-gradient(ellipse at top, #1d3123 0%, #0c150f 55%, #060b08 100%); }
+.crash-card { width: 100%; max-width: 330px; padding: 24px 20px; border-radius: 18px; text-align: center;
+  background: linear-gradient(180deg, #2A1A16, #150C0A); border: 1px solid rgba(228,115,90,0.45); }
+.crash-title { font-size: 13px; font-weight: 800; letter-spacing: 0.16em; color: #FFB3A0; }
+.crash-body { font-size: 14px; line-height: 1.55; color: #D8C5BE; margin: 10px 0 18px; }
+.crash-btn { width: 100%; min-height: 46px; border-radius: 11px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.1em;
+  color: #2A0D07; background: linear-gradient(180deg, #FFB3A0, #E4553A);
+  border: 1.5px solid rgba(255,200,185,0.7); }
+.crash-detail { margin-top: 14px; font-size: 10px; color: #7A6660; word-break: break-word; }
 .gear-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
   flex-shrink: 0; border-radius: 8px; cursor: pointer; color: #BFE4FF;
   background: linear-gradient(180deg, rgba(40,76,118,0.95), rgba(18,38,62,0.95));
@@ -7173,5 +7322,5 @@ input, select, textarea { font-size: 16px; }
 ;
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(NFLDraftSimulator));
+root.render(React.createElement(Boundary, null, React.createElement(NFLDraftSimulator)));
 </script></body></html>
