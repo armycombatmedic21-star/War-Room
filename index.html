@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>WAR ROOM</title><script src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><style>html,body{margin:0;padding:0;background:#060b08;}</style></head><body><div id="root"></div><script>const { useState, useEffect, useMemo, useRef } = React;
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"><title>WAR ROOM</title><script src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><style>html,body{margin:0;padding:0;background:#060b08;}</style></head><body><div id="root"></div><script>const { useState, useEffect, useMemo, useRef } = React;
 const REAL_ADP = {
   "Jahmyr Gibbs": 1.71,
   "Bijan Robinson": 1.94,
@@ -2617,7 +2617,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-014830";
+const APP_VERSION = "20260804-020235";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2639,7 +2639,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.16";
+const APP_RELEASE = "5.2.18";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -2885,6 +2885,13 @@ const net = {
       });
       onDisconnect(ref(FB.db, "rooms/" + id + "/players/" + host)).remove();
     });
+    if (o.chaos) {
+      const slot = 1 + Math.floor(Math.random() * NUM_TEAMS);
+      whenReady(() => {
+        const { ref, set } = FB.api;
+        set(ref(FB.db, "rooms/" + id + "/seats/" + slot), { user: host, teamName: host, ready: false });
+      });
+    }
     return {
       id,
       name,
@@ -3408,7 +3415,8 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
     setMsg("");
   }
   function doCreate() {
-    const n = roomName.trim() || username + "'s room";
+    const n = roomName.trim();
+    if (!n) return;
     const room = net.createRoom(n, username, opts);
     setRoomName("");
     setCreating(false);
@@ -3491,7 +3499,11 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
             React.createElement("span", { className: "cwknob" })
           )
         )),
-        React.createElement("button", { className: "nr-go", onClick: doCreate }, "CREATE ROOM")
+        React.createElement("button", {
+          className: "nr-go" + (roomName.trim() ? "" : " nr-go-off"),
+          disabled: !roomName.trim(),
+          onClick: doCreate
+        }, roomName.trim() ? "CREATE ROOM" : "NAME YOUR ROOM")
       )
     ),
     React.createElement(
@@ -5130,7 +5142,7 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .sub { color: #9FB3A4; font-size: 14px; margin-top: 10px; line-height: 1.55; letter-spacing: 0.01em; }
 .card { background: rgba(27,43,32,0.52); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%); border: 1px solid rgba(241,237,225,0.13); border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.045); }
 .card-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: #C9D6C9; margin-bottom: 12px; }
-.text-input { width: 100%; background: rgba(15,26,19,0.65); backdrop-filter: blur(6px); border: 1px solid rgba(241,237,225,0.13); border-radius: 10px; padding: 13px 14px; color: #F1EDE1; font-size: 15px; box-sizing: border-box; transition: border-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+.text-input { width: 100%; background: rgba(15,26,19,0.65); backdrop-filter: blur(6px); border: 1px solid rgba(241,237,225,0.13); border-radius: 10px; padding: 13px 14px; color: #F1EDE1; font-size: 16px; box-sizing: border-box; transition: border-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
 .text-input:focus { outline: none; border-color: #E8B33D; background: rgba(15,26,19,0.85); }
 .slot-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 9px; }
 .slot-chip { aspect-ratio: 1; min-height: 44px; background: linear-gradient(180deg, rgba(48,66,52,0.95), rgba(19,30,22,0.95)); border: 1px solid rgba(241,237,225,0.15); border-radius: 10px; color: #C9D6C9; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,0.11), inset 0 -3px 6px rgba(0,0,0,0.34), 0 2px 5px rgba(0,0,0,0.32); transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), filter 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease; }
@@ -5912,7 +5924,7 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .chat-user { font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; color: #7FB6E8; }
 .chat-text { font-size: 14.5px; line-height: 1.4; color: #EAF3FB; word-break: break-word; }
 .chat-input-row { flex-shrink: 0; display: flex; gap: 7px; margin-top: 9px; }
-.chat-input { flex: 1; min-width: 0; font-size: 14px; padding: 10px 12px; border-radius: 10px;
+.chat-input { flex: 1; min-width: 0; font-size: 16px; padding: 10px 12px; border-radius: 10px;
   color: #F1EDE1; background: rgba(0,0,0,0.28); border: 1px solid rgba(150,190,225,0.22); outline: none; }
 .chat-send { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 800;
   letter-spacing: 0.08em; padding: 0 14px; border-radius: 10px; cursor: pointer; color: #07131f;
@@ -6428,9 +6440,10 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 
 /* --- new room popup --- */
 .nr-backdrop { position: fixed; inset: 0; z-index: 132; background: rgba(3,10,14,0.84);
-  backdrop-filter: blur(5px); display: flex; justify-content: center;
-  padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
-.nr-card { margin: auto; width: 100%; max-width: 350px; padding: 20px; border-radius: 18px;
+  backdrop-filter: blur(5px); display: block; overscroll-behavior: contain;
+  padding: 16px 18px calc(24px + env(safe-area-inset-bottom, 0px)); overflow-y: auto;
+  -webkit-overflow-scrolling: touch; }
+.nr-card { margin: 0 auto; width: 100%; max-width: 350px; padding: 20px; border-radius: 18px;
   background: linear-gradient(180deg, #13273D, #0A1521); border: 1px solid rgba(120,180,255,0.42);
   box-shadow: 0 22px 60px rgba(0,0,0,0.7); animation: sheetUp 0.28s cubic-bezier(0.16,1,0.3,1); }
 .nr-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -6438,6 +6451,7 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .nr-x { background: none; border: none; color: #8FA9C0; font-size: 13px; cursor: pointer; padding: 2px 4px; }
 .nr-label { font-size: 10px; letter-spacing: 0.15em; color: #7690A6; font-weight: 700;
   margin: 16px 0 2px; padding-bottom: 5px; border-bottom: 1px solid rgba(150,190,225,0.14); }
+.nr-go-off { opacity: 0.4; cursor: default; box-shadow: none; }
 .nr-go { width: 100%; margin-top: 18px; min-height: 48px; border-radius: 12px; cursor: pointer;
   font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.1em;
   color: #07131f; background: linear-gradient(180deg, #CBE8FF, #6FB4F5);
@@ -6472,18 +6486,28 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .room-ready { position: relative; overflow: visible; font-size: 26px !important; font-weight: 800 !important;
   letter-spacing: 0.05em !important; min-height: 62px !important; }
 .ready-spark { position: absolute; inset: -6px; pointer-events: none; }
-.ready-spark i { position: absolute; top: 50%; left: 50%; width: 3px; height: 3px; border-radius: 50%;
-  background: #C8FFE0; box-shadow: 0 0 7px 2px rgba(140,255,190,0.9);
+.ready-spark i { position: absolute; top: 50%; left: 50%; border-radius: 50%; background: #DCFFEA;
   animation: readySpark 2.6s linear infinite; }
+.ready-spark i:nth-child(1){width:4.2px;height:4.2px;margin:-2.1px 0 0 -2.1px;opacity:.95}
+.ready-spark i:nth-child(2){width:3.9px;height:3.9px;margin:-1.95px 0 0 -1.95px;opacity:.86}
+.ready-spark i:nth-child(3){width:3.6px;height:3.6px;margin:-1.8px 0 0 -1.8px;opacity:.77}
+.ready-spark i:nth-child(4){width:3.3px;height:3.3px;margin:-1.65px 0 0 -1.65px;opacity:.68}
+.ready-spark i:nth-child(5){width:3px;height:3px;margin:-1.5px 0 0 -1.5px;opacity:.58}
+.ready-spark i:nth-child(6){width:2.7px;height:2.7px;margin:-1.35px 0 0 -1.35px;opacity:.48}
+.ready-spark i:nth-child(7){width:2.4px;height:2.4px;margin:-1.2px 0 0 -1.2px;opacity:.38}
+.ready-spark i:nth-child(8){width:2.1px;height:2.1px;margin:-1.05px 0 0 -1.05px;opacity:.28}
 @keyframes readySpark {
   0%   { transform: rotate(0deg) translateX(148px) rotate(0deg); opacity: 0.2; }
   50%  { opacity: 1; }
   100% { transform: rotate(360deg) translateX(148px) rotate(-360deg); opacity: 0.2; }
 }
-.ready-spark i:nth-child(1){animation-delay:0s}    .ready-spark i:nth-child(2){animation-delay:.32s}
-.ready-spark i:nth-child(3){animation-delay:.65s}  .ready-spark i:nth-child(4){animation-delay:.97s}
-.ready-spark i:nth-child(5){animation-delay:1.3s}  .ready-spark i:nth-child(6){animation-delay:1.62s}
-.ready-spark i:nth-child(7){animation-delay:1.95s} .ready-spark i:nth-child(8){animation-delay:2.27s}
+.ready-spark i:nth-child(1){animation-delay:0s}    .ready-spark i:nth-child(2){animation-delay:-.09s}
+.ready-spark i:nth-child(3){animation-delay:-.18s}  .ready-spark i:nth-child(4){animation-delay:-.27s}
+.ready-spark i:nth-child(5){animation-delay:-.36s}  .ready-spark i:nth-child(6){animation-delay:-.45s}
+.ready-spark i:nth-child(7){animation-delay:-.54s} .ready-spark i:nth-child(8){animation-delay:-.63s}
+/* Any focused input under 16px makes iOS zoom the page. Enforced globally so a
+   future field cannot reintroduce it. */
+input, select, textarea { font-size: 16px; }
 .gear-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
   flex-shrink: 0; border-radius: 8px; cursor: pointer; color: #BFE4FF;
   background: linear-gradient(180deg, rgba(40,76,118,0.95), rgba(18,38,62,0.95));
