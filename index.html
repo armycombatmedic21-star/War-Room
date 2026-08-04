@@ -2356,7 +2356,7 @@ function NFLDraftSimulator() {
   }, onStart: (room, slot) => {
     setIsCommish(room.host === roomUser);
     setRoomSeats(room.seats || null);
-    setRoomRules({ noCopilot: !!room.noCopilot, noGodsEye: !!room.noGodsEye });
+    setRoomRules({ noCopilot: !!room.noCopilot, noGodsEye: !!room.noGodsEye, noAutopick: !!room.noAutopick });
     setUserSlot(slot);
     setUserName(room.seats[slot] && room.seats[slot].teamName || roomUser);
     setDraftSeed(newDraftSeed());
@@ -2620,7 +2620,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-021801";
+const APP_VERSION = "20260804-045908";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2642,7 +2642,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.20";
+const APP_RELEASE = "5.2.21";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -2884,7 +2884,8 @@ const net = {
         allowSpectators: o.allowSpectators !== false,
         noGodsEye: !!o.noGodsEye,
         noCopilot: !!o.noCopilot,
-        chaos: !!o.chaos
+        chaos: !!o.chaos,
+        noAutopick: !!o.noAutopick
       });
       onDisconnect(ref(FB.db, "rooms/" + id + "/players/" + host)).remove();
     });
@@ -2906,7 +2907,8 @@ const net = {
       allowSpectators: (opts || {}).allowSpectators !== false,
       noGodsEye: !!(opts || {}).noGodsEye,
       noCopilot: !!(opts || {}).noCopilot,
-      chaos: !!(opts || {}).chaos
+      chaos: !!(opts || {}).chaos,
+      noAutopick: !!(opts || {}).noAutopick
     };
   },
   joinRoom(id, user) {
@@ -3365,7 +3367,7 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
   const [rooms, setRooms] = useState([]);
   const [msg, setMsg] = useState("");
   const [creating, setCreating] = useState(false);
-  const [opts, setOpts] = useState({ allowSpectators: true, noGodsEye: false, noCopilot: false, chaos: false });
+  const [opts, setOpts] = useState({ allowSpectators: true, noGodsEye: false, noCopilot: false, chaos: false, noAutopick: false });
   const [freshRoom, setFreshRoom] = useState(null);
   const [present, setPresent] = useState([]);
   const [whoOpen, setWhoOpen] = useState(true);
@@ -3481,7 +3483,8 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
           ["chaos", "Chaos: randomized slots", "Draft order is assigned on entry \u2014 nobody picks their seat"],
           ["allowSpectators", "Allow spectators", "Anyone can watch without taking a slot"],
           ["noCopilot", "Disable Copilot", "No AI recommendations for anyone in this room"],
-          ["noGodsEye", "Disable God's Eye", "No availability odds for anyone in this room"]
+          ["noGodsEye", "Disable God's Eye", "No availability odds for anyone in this room"],
+          ["noAutopick", "No autopick", "The clock runs out without picking for anyone"]
         ].map(([k, title, sub]) => React.createElement(
           "button",
           {
@@ -4115,6 +4118,7 @@ function DraftScreen(props) {
   const clockTone = clockPct > 0.5 ? "ok" : clockPct > 0.25 ? "warn" : "crit";
   const clockFmt = `${Math.floor(clockLeft / 60)}:${String(clockLeft % 60).padStart(2, "0")}`;
   useEffect(() => {
+    if (roomRules && roomRules.noAutopick) return;
     if (!roomId || spectating || !isUserTurn || clockLeft > 0 || !onAutoPick) return;
     onAutoPick();
   }, [clockLeft, isUserTurn, roomId]);
