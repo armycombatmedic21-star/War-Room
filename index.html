@@ -2011,6 +2011,7 @@ function NFLDraftSimulator() {
   const [isCommish, setIsCommish] = useState(false);
   const [spectating, setSpectating] = useState(false);
   const [roomSeats, setRoomSeats] = useState(null);
+  const [roomRules, setRoomRules] = useState(null);
   const [authority, setAuthority] = useState(null);
   useEffect(() => {
     if (!roomId) return;
@@ -2355,6 +2356,7 @@ function NFLDraftSimulator() {
   }, onStart: (room, slot) => {
     setIsCommish(room.host === roomUser);
     setRoomSeats(room.seats || null);
+    setRoomRules({ noCopilot: !!room.noCopilot, noGodsEye: !!room.noGodsEye });
     setUserSlot(slot);
     setUserName(room.seats[slot] && room.seats[slot].teamName || roomUser);
     setDraftSeed(newDraftSeed());
@@ -2405,6 +2407,7 @@ function NFLDraftSimulator() {
       roomUser,
       isCommish,
       roomSeats,
+      roomRules,
       spectating,
       onAutoPick: () => {
         if (roomId && !amAuthority) return;
@@ -2617,7 +2620,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-020235";
+const APP_VERSION = "20260804-021801";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2639,7 +2642,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.18";
+const APP_RELEASE = "5.2.20";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -3468,7 +3471,6 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
           placeholder: "Room name",
           value: roomName,
           maxLength: 28,
-          autoFocus: true,
           onChange: (e) => setRoomName(e.target.value),
           onKeyDown: (e) => {
             if (e.key === "Enter") doCreate();
@@ -3986,7 +3988,12 @@ function DraftScreen(props) {
   const [godsIgniting, setGodsIgniting] = useState(false);
   const [godsLock, setGodsLock] = useState(false);
   const [oddsInfo, setOddsInfo] = useState(null);
+  const [blocked, setBlocked] = useState(null);
   function toggleGodsEye() {
+    if (roomRules && roomRules.noGodsEye) {
+      setBlocked("GOD'S EYE");
+      return;
+    }
     if (!godsEye && !godsEyeUnlocked()) {
       setGodsLock(true);
       return;
@@ -3999,6 +4006,10 @@ function DraftScreen(props) {
     }
   }
   function toggleCopilot() {
+    if (roomRules && roomRules.noCopilot) {
+      setBlocked("COPILOT");
+      return;
+    }
     if (!copilot && !copilotUnlocked()) {
       setLockOpen(true);
       return;
@@ -4049,6 +4060,7 @@ function DraftScreen(props) {
     roomUser,
     isCommish,
     roomSeats,
+    roomRules,
     spectating,
     onAutoPick
   } = props;
@@ -4178,6 +4190,24 @@ function DraftScreen(props) {
       );
     })(),
     autoRun && /* @__PURE__ */ React.createElement("div", { className: "devbar" }, /* @__PURE__ */ React.createElement("span", { className: "devbar-label mono" }, "DEVELOPMENT ANALYSIS"), /* @__PURE__ */ React.createElement("span", { className: "devbar-meta" }, rerunning ? "simulating\u2026" : `${picks.length}/${TOTAL_PICKS} picks`), /* @__PURE__ */ React.createElement("button", { className: "devbar-btn", onClick: onRerun, disabled: rerunning }, "\u21BB RERUN")),
+    blocked && /* @__PURE__ */ React.createElement(
+      "div",
+      { className: "blk-backdrop", onClick: () => setBlocked(null) },
+      /* @__PURE__ */ React.createElement(
+        "div",
+        { className: "blk-card", onClick: (e) => e.stopPropagation() },
+        /* @__PURE__ */ React.createElement("div", { className: "blk-icon" }, "\u26D4"),
+        /* @__PURE__ */ React.createElement("div", { className: "blk-title mono" }, blocked, " DISABLED"),
+        /* @__PURE__ */ React.createElement(
+          "div",
+          { className: "blk-body" },
+          "The commissioner turned ",
+          blocked === "COPILOT" ? "Copilot" : "God's Eye",
+          " off for this room. Everyone drafts without it."
+        ),
+        /* @__PURE__ */ React.createElement("button", { className: "blk-close", onClick: () => setBlocked(null) }, "GOT IT")
+      )
+    ),
     godsLock && /* @__PURE__ */ React.createElement(CopilotLock, {
       gold: true,
       title: "GOD'S EYE LOCKED",
@@ -6485,29 +6515,43 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 /* --- ready button --- */
 .room-ready { position: relative; overflow: visible; font-size: 26px !important; font-weight: 800 !important;
   letter-spacing: 0.05em !important; min-height: 62px !important; }
-.ready-spark { position: absolute; inset: -6px; pointer-events: none; }
-.ready-spark i { position: absolute; top: 50%; left: 50%; border-radius: 50%; background: #DCFFEA;
-  animation: readySpark 2.6s linear infinite; }
-.ready-spark i:nth-child(1){width:4.2px;height:4.2px;margin:-2.1px 0 0 -2.1px;opacity:.95}
-.ready-spark i:nth-child(2){width:3.9px;height:3.9px;margin:-1.95px 0 0 -1.95px;opacity:.86}
-.ready-spark i:nth-child(3){width:3.6px;height:3.6px;margin:-1.8px 0 0 -1.8px;opacity:.77}
-.ready-spark i:nth-child(4){width:3.3px;height:3.3px;margin:-1.65px 0 0 -1.65px;opacity:.68}
-.ready-spark i:nth-child(5){width:3px;height:3px;margin:-1.5px 0 0 -1.5px;opacity:.58}
-.ready-spark i:nth-child(6){width:2.7px;height:2.7px;margin:-1.35px 0 0 -1.35px;opacity:.48}
-.ready-spark i:nth-child(7){width:2.4px;height:2.4px;margin:-1.2px 0 0 -1.2px;opacity:.38}
-.ready-spark i:nth-child(8){width:2.1px;height:2.1px;margin:-1.05px 0 0 -1.05px;opacity:.28}
-@keyframes readySpark {
-  0%   { transform: rotate(0deg) translateX(148px) rotate(0deg); opacity: 0.2; }
-  50%  { opacity: 1; }
-  100% { transform: rotate(360deg) translateX(148px) rotate(-360deg); opacity: 0.2; }
+.ready-spark { position: absolute; inset: 0; pointer-events: none; }
+.ready-spark i { position: absolute; top: 0; left: 0; border-radius: 50%; background: #DCFFEA;
+  box-shadow: 0 0 8px 2px rgba(140,255,190,0.85);
+  animation: readyRun 2.8s linear infinite; }
+/* Four edges in sequence, so the comet follows the button outline instead of
+   sweeping a circle around it. */
+@keyframes readyRun {
+  0%   { left: 0;    top: 0; }
+  25%  { left: 100%; top: 0; }
+  50%  { left: 100%; top: 100%; }
+  75%  { left: 0;    top: 100%; }
+  100% { left: 0;    top: 0; }
 }
-.ready-spark i:nth-child(1){animation-delay:0s}    .ready-spark i:nth-child(2){animation-delay:-.09s}
-.ready-spark i:nth-child(3){animation-delay:-.18s}  .ready-spark i:nth-child(4){animation-delay:-.27s}
-.ready-spark i:nth-child(5){animation-delay:-.36s}  .ready-spark i:nth-child(6){animation-delay:-.45s}
-.ready-spark i:nth-child(7){animation-delay:-.54s} .ready-spark i:nth-child(8){animation-delay:-.63s}
+.ready-spark i:nth-child(1){width:5px;height:5px;margin:-2.5px 0 0 -2.5px;opacity:1;animation-delay:0s}
+.ready-spark i:nth-child(2){width:4.5px;height:4.5px;margin:-2.25px 0 0 -2.25px;opacity:.86;animation-delay:-.07s}
+.ready-spark i:nth-child(3){width:4px;height:4px;margin:-2px 0 0 -2px;opacity:.73;animation-delay:-.14s}
+.ready-spark i:nth-child(4){width:3.6px;height:3.6px;margin:-1.8px 0 0 -1.8px;opacity:.6;animation-delay:-.21s}
+.ready-spark i:nth-child(5){width:3.2px;height:3.2px;margin:-1.6px 0 0 -1.6px;opacity:.48;animation-delay:-.28s}
+.ready-spark i:nth-child(6){width:2.8px;height:2.8px;margin:-1.4px 0 0 -1.4px;opacity:.37;animation-delay:-.35s}
+.ready-spark i:nth-child(7){width:2.4px;height:2.4px;margin:-1.2px 0 0 -1.2px;opacity:.26;animation-delay:-.42s}
+.ready-spark i:nth-child(8){width:2px;height:2px;margin:-1px 0 0 -1px;opacity:.16;animation-delay:-.49s}
 /* Any focused input under 16px makes iOS zoom the page. Enforced globally so a
    future field cannot reintroduce it. */
 input, select, textarea { font-size: 16px; }
+
+.blk-backdrop { position: fixed; inset: 0; z-index: 142; background: rgba(10,6,4,0.84);
+  backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.blk-card { width: 100%; max-width: 320px; padding: 24px 20px 18px; border-radius: 18px; text-align: center;
+  background: linear-gradient(180deg, #2A1A16, #150C0A); border: 1px solid rgba(228,115,90,0.45);
+  box-shadow: 0 20px 54px rgba(0,0,0,0.7); animation: sheetUp 0.26s cubic-bezier(0.16,1,0.3,1); }
+.blk-icon { font-size: 34px; line-height: 1; margin-bottom: 8px; }
+.blk-title { font-size: 14px; font-weight: 800; letter-spacing: 0.14em; color: #FFB3A0; margin-bottom: 9px; }
+.blk-body { font-size: 14px; line-height: 1.55; color: #D8C5BE; }
+.blk-close { width: 100%; margin-top: 18px; min-height: 44px; border-radius: 11px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 800; letter-spacing: 0.1em;
+  color: #2A0D07; background: linear-gradient(180deg, #FFB3A0, #E4553A);
+  border: 1.5px solid rgba(255,200,185,0.7); }
 .gear-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
   flex-shrink: 0; border-radius: 8px; cursor: pointer; color: #BFE4FF;
   background: linear-gradient(180deg, rgba(40,76,118,0.95), rgba(18,38,62,0.95));
