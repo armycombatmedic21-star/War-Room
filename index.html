@@ -2617,7 +2617,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260803-212533";
+const APP_VERSION = "20260804-014830";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2639,7 +2639,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.12";
+const APP_RELEASE = "5.2.16";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -2866,8 +2866,9 @@ const net = {
     for (let i = 0; i < 4; i++) s += A[Math.floor(Math.random() * A.length)];
     return s;
   },
-  createRoom(name, host) {
+  createRoom(name, host, opts) {
     const id = this._code();
+    const o = opts || {};
     whenReady(() => {
       const { ref, set, onDisconnect } = FB.api;
       set(ref(FB.db, "rooms/" + id), {
@@ -2876,18 +2877,45 @@ const net = {
         status: "waiting",
         teams: NUM_TEAMS,
         players: { [host]: true },
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        allowSpectators: o.allowSpectators !== false,
+        noGodsEye: !!o.noGodsEye,
+        noCopilot: !!o.noCopilot,
+        chaos: !!o.chaos
       });
       onDisconnect(ref(FB.db, "rooms/" + id + "/players/" + host)).remove();
     });
-    return { id, name, host, players: [host], status: "waiting", teams: NUM_TEAMS, seats: {} };
+    return {
+      id,
+      name,
+      host,
+      players: [host],
+      status: "waiting",
+      teams: NUM_TEAMS,
+      seats: {},
+      allowSpectators: (opts || {}).allowSpectators !== false,
+      noGodsEye: !!(opts || {}).noGodsEye,
+      noCopilot: !!(opts || {}).noCopilot,
+      chaos: !!(opts || {}).chaos
+    };
   },
   joinRoom(id, user) {
     whenReady(() => {
-      const { ref, set, onDisconnect } = FB.api;
+      const { ref, set, onDisconnect, get } = FB.api;
       const r = ref(FB.db, "rooms/" + id + "/players/" + user);
       set(r, true);
       onDisconnect(r).remove();
+      get(ref(FB.db, "rooms/" + id)).then((s) => {
+        const v = s.val();
+        if (!v || !v.chaos) return;
+        const seats = v.seats || {};
+        if (Object.keys(seats).some((k) => seats[k] && seats[k].user === user)) return;
+        const free = [];
+        for (let i = 1; i <= NUM_TEAMS; i++) if (!seats[i]) free.push(i);
+        if (!free.length) return;
+        const slot = free[Math.floor(Math.random() * free.length)];
+        this.claimSlot(id, slot, user, user);
+      });
     });
   },
   spectate(id, user) {
@@ -3327,6 +3355,8 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
   const [rooms, setRooms] = useState([]);
   const [msg, setMsg] = useState("");
   const [creating, setCreating] = useState(false);
+  const [opts, setOpts] = useState({ allowSpectators: true, noGodsEye: false, noCopilot: false, chaos: false });
+  const [freshRoom, setFreshRoom] = useState(null);
   const [present, setPresent] = useState([]);
   const [whoOpen, setWhoOpen] = useState(true);
   const [invited, setInvited] = useState(false);
@@ -3379,9 +3409,11 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
   }
   function doCreate() {
     const n = roomName.trim() || username + "'s room";
-    const room = net.createRoom(n, username);
+    const room = net.createRoom(n, username, opts);
     setRoomName("");
     setCreating(false);
+    setFreshRoom(room.id);
+    setTimeout(() => setFreshRoom(null), 1e4);
     onEnterRoom(room.id, username);
   }
   if (!username) return React.createElement(UsernameGate, { onSet: setName });
@@ -3413,18 +3445,54 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
     React.createElement("div", { className: "lobby-you mono" }, "SIGNED IN AS ", React.createElement("b", null, username)),
     creating && React.createElement(
       "div",
-      { className: "lobby-newroom" },
-      React.createElement("input", {
-        className: "text-input",
-        placeholder: "Room name",
-        value: roomName,
-        maxLength: 28,
-        onChange: (e) => setRoomName(e.target.value),
-        onKeyDown: (e) => {
-          if (e.key === "Enter") doCreate();
-        }
-      }),
-      React.createElement("button", { className: "newroom-go", onClick: doCreate }, "CREATE")
+      { className: "nr-backdrop", onClick: () => setCreating(false) },
+      React.createElement(
+        "div",
+        { className: "nr-card", onClick: (e) => e.stopPropagation() },
+        React.createElement(
+          "div",
+          { className: "nr-head" },
+          React.createElement("span", { className: "nr-title mono" }, "NEW ROOM"),
+          React.createElement("button", { className: "nr-x", onClick: () => setCreating(false) }, "\u2715")
+        ),
+        React.createElement("input", {
+          className: "text-input",
+          placeholder: "Room name",
+          value: roomName,
+          maxLength: 28,
+          autoFocus: true,
+          onChange: (e) => setRoomName(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") doCreate();
+          }
+        }),
+        React.createElement("div", { className: "nr-label mono" }, "ROOM RULES"),
+        [
+          ["chaos", "Chaos: randomized slots", "Draft order is assigned on entry \u2014 nobody picks their seat"],
+          ["allowSpectators", "Allow spectators", "Anyone can watch without taking a slot"],
+          ["noCopilot", "Disable Copilot", "No AI recommendations for anyone in this room"],
+          ["noGodsEye", "Disable God's Eye", "No availability odds for anyone in this room"]
+        ].map(([k, title, sub]) => React.createElement(
+          "button",
+          {
+            key: k,
+            className: "noise-row" + (opts[k] ? " noise-on" : ""),
+            onClick: () => setOpts((o) => ({ ...o, [k]: !o[k] }))
+          },
+          React.createElement(
+            "span",
+            { className: "noise-text" },
+            React.createElement("span", { className: "noise-title" }, title),
+            React.createElement("span", { className: "noise-sub" }, sub)
+          ),
+          React.createElement(
+            "span",
+            { className: "cwswitch" + (opts[k] ? " cwswitch-on" : "") },
+            React.createElement("span", { className: "cwknob" })
+          )
+        )),
+        React.createElement("button", { className: "nr-go", onClick: doCreate }, "CREATE ROOM")
+      )
     ),
     React.createElement(
       "button",
@@ -3505,7 +3573,7 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
           "No rooms yet. Create one and invite your league."
         ) : rooms.map((r) => React.createElement(
           "div",
-          { key: r.id, className: "room-row" },
+          { key: r.id, className: "room-row" + (r.id === freshRoom ? " room-row-new" : "") },
           React.createElement(
             "span",
             { className: "room-body" },
@@ -3596,6 +3664,7 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
     if (room && room.status === "drafting" && (mySlot || spectating)) onStart(room, mySlot ? Number(mySlot) : 0);
   }, [room && room.status]);
   function claim(slot) {
+    if (room && room.chaos) return;
     if (seats[slot] && seats[slot].user !== username) return;
     net.claimSlot(roomId, slot, username, teamName || username);
   }
@@ -3659,7 +3728,7 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
     React.createElement(
       "div",
       { className: "room-step mono" + (!mySlot ? " room-step-live" : " room-step-done") },
-      !mySlot ? "CLAIM YOUR DRAFT SPOT" : "\u2713 SLOT " + mySlot + " IS YOURS"
+      room.chaos ? mySlot ? "\u2713 SLOT " + mySlot + " \u2014 ASSIGNED" : "CHAOS: RANDOMIZED ASSIGNMENTS" : !mySlot ? "CLAIM YOUR DRAFT SPOT" : "\u2713 SLOT " + mySlot + " IS YOURS"
     ),
     React.createElement(
       "div",
@@ -3731,11 +3800,20 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
       React.createElement("span", { className: "room-cd-label mono" }, "DRAFT STARTING IN"),
       React.createElement("span", { className: "room-cd-num" }, secsLeft)
     ) : null,
-    React.createElement("button", {
-      className: "room-ready" + (mySlot && !seats[mySlot].ready && secsLeft == null ? " room-attn" : "") + (secsLeft != null && room.status === "waiting" ? " room-ready-cancel" : mySlot && seats[mySlot].ready ? " room-ready-on" : "") + (!mySlot ? " room-ready-off" : ""),
-      disabled: !mySlot,
-      onClick: toggleReady
-    }, !mySlot ? "CLAIM A SLOT FIRST" : secsLeft != null && room.status === "waiting" ? "CANCEL" : seats[mySlot].ready ? "\u2713 READY \xB7 TAP TO UNREADY" : "\u2461 TAP TO READY UP"),
+    React.createElement(
+      "button",
+      {
+        className: "room-ready" + (mySlot && !seats[mySlot].ready && secsLeft == null ? " room-attn" : "") + (secsLeft != null && room.status === "waiting" ? " room-ready-cancel" : mySlot && seats[mySlot].ready ? " room-ready-on" : "") + (!mySlot ? " room-ready-off" : ""),
+        disabled: !mySlot,
+        onClick: toggleReady
+      },
+      !mySlot ? "CLAIM A SLOT FIRST" : secsLeft != null && room.status === "waiting" ? "CANCEL" : seats[mySlot].ready ? "\u2713 READY \xB7 TAP TO UNREADY" : "TAP TO READY UP",
+      mySlot && !seats[mySlot].ready && secsLeft == null ? React.createElement(
+        "span",
+        { className: "ready-spark", "aria-hidden": "true" },
+        Array.from({ length: 8 }, (_, i) => React.createElement("i", { key: i }))
+      ) : null
+    ),
     isCommish ? React.createElement("button", {
       className: "room-start" + (allReady ? "" : " room-start-off"),
       disabled: !claimed.length,
@@ -5455,6 +5533,11 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 
 /* --- pick verdict --- */
 .pv { margin: 4px 0 16px; padding: 12px 13px; border-radius: 12px; }
+/* The last-pick strip changes height when a steal/reach verdict appears, which
+   pushed the whole board up and down between picks. Reserving the taller of the
+   two states keeps the layout still. */
+.last-pick { min-height: 58px; }
+.human-pick { min-height: 42px; }
 .pv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .pv-tag { font-size: 11.5px; font-weight: 800; letter-spacing: 0.13em; padding: 4px 9px; border-radius: 6px; }
 .pv-delta { font-size: 21px; font-weight: 800; }
@@ -6342,6 +6425,65 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
          box-shadow: 0 0 96px 34px rgba(255,236,180,1); }
 }
 .lock-gold .lock-burst i { background: linear-gradient(180deg, #FFF6DC, rgba(232,179,61,0)); }
+
+/* --- new room popup --- */
+.nr-backdrop { position: fixed; inset: 0; z-index: 132; background: rgba(3,10,14,0.84);
+  backdrop-filter: blur(5px); display: flex; justify-content: center;
+  padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+.nr-card { margin: auto; width: 100%; max-width: 350px; padding: 20px; border-radius: 18px;
+  background: linear-gradient(180deg, #13273D, #0A1521); border: 1px solid rgba(120,180,255,0.42);
+  box-shadow: 0 22px 60px rgba(0,0,0,0.7); animation: sheetUp 0.28s cubic-bezier(0.16,1,0.3,1); }
+.nr-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.nr-title { font-size: 13px; font-weight: 800; letter-spacing: 0.16em; color: #BFE4FF; }
+.nr-x { background: none; border: none; color: #8FA9C0; font-size: 13px; cursor: pointer; padding: 2px 4px; }
+.nr-label { font-size: 10px; letter-spacing: 0.15em; color: #7690A6; font-weight: 700;
+  margin: 16px 0 2px; padding-bottom: 5px; border-bottom: 1px solid rgba(150,190,225,0.14); }
+.nr-go { width: 100%; margin-top: 18px; min-height: 48px; border-radius: 12px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.1em;
+  color: #07131f; background: linear-gradient(180deg, #CBE8FF, #6FB4F5);
+  border: 1.5px solid rgba(190,225,255,0.75); box-shadow: 0 5px 16px rgba(60,130,200,0.4); }
+.nr-go:active { transform: scale(0.98); }
+
+/* --- create room button: pulse + blue sweep --- */
+.lobby-create { position: relative; overflow: hidden; animation: createPulse 2s ease-in-out infinite; }
+@keyframes createPulse {
+  0%,100% { box-shadow: 0 0 10px 1px rgba(96,178,255,0.3); }
+  50%     { box-shadow: 0 0 22px 5px rgba(120,195,255,0.75); }
+}
+.lobby-create::after { content: ""; position: absolute; top: -60%; bottom: -60%; width: 22px; left: -40px;
+  pointer-events: none; background: linear-gradient(90deg, transparent, rgba(235,248,255,0.85), transparent);
+  transform: rotate(18deg); animation: createSweep 3.4s ease-in-out infinite; }
+@keyframes createSweep {
+  0%, 62% { left: -40px; } 78%, 100% { left: 130%; }
+}
+
+/* --- freshly created room --- */
+.room-row-new { animation: newRoomHit 0.6s ease-out, newRoomPulse 1.6s ease-in-out 0.6s 6; border-radius: 9px; }
+@keyframes newRoomHit {
+  0%   { background: rgba(150,215,255,0.6); box-shadow: 0 0 30px 8px rgba(120,195,255,0.8); }
+  100% { background: transparent; box-shadow: none; }
+}
+@keyframes newRoomPulse {
+  0%,100% { background: rgba(96,178,255,0.05); }
+  50%     { background: rgba(96,178,255,0.2); }
+}
+
+/* --- ready button --- */
+.room-ready { position: relative; overflow: visible; font-size: 26px !important; font-weight: 800 !important;
+  letter-spacing: 0.05em !important; min-height: 62px !important; }
+.ready-spark { position: absolute; inset: -6px; pointer-events: none; }
+.ready-spark i { position: absolute; top: 50%; left: 50%; width: 3px; height: 3px; border-radius: 50%;
+  background: #C8FFE0; box-shadow: 0 0 7px 2px rgba(140,255,190,0.9);
+  animation: readySpark 2.6s linear infinite; }
+@keyframes readySpark {
+  0%   { transform: rotate(0deg) translateX(148px) rotate(0deg); opacity: 0.2; }
+  50%  { opacity: 1; }
+  100% { transform: rotate(360deg) translateX(148px) rotate(-360deg); opacity: 0.2; }
+}
+.ready-spark i:nth-child(1){animation-delay:0s}    .ready-spark i:nth-child(2){animation-delay:.32s}
+.ready-spark i:nth-child(3){animation-delay:.65s}  .ready-spark i:nth-child(4){animation-delay:.97s}
+.ready-spark i:nth-child(5){animation-delay:1.3s}  .ready-spark i:nth-child(6){animation-delay:1.62s}
+.ready-spark i:nth-child(7){animation-delay:1.95s} .ready-spark i:nth-child(8){animation-delay:2.27s}
 .gear-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
   flex-shrink: 0; border-radius: 8px; cursor: pointer; color: #BFE4FF;
   background: linear-gradient(180deg, rgba(40,76,118,0.95), rgba(18,38,62,0.95));
