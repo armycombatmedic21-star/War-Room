@@ -2018,6 +2018,28 @@ function NFLDraftSimulator() {
   const [roomUser, setRoomUser] = useState("");
   const [isCommish, setIsCommish] = useState(false);
   const [spectating, setSpectating] = useState(false);
+  useEffect(() => {
+    try {
+      if (roomId && roomUser) localStorage.setItem("warroom.room", JSON.stringify({ roomId, roomUser, spectating }));
+      else localStorage.removeItem("warroom.room");
+    } catch (e) {
+    }
+  }, [roomId, roomUser, spectating]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("warroom.room");
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (!s || !s.roomId || !s.roomUser) return;
+      setRoomId(s.roomId);
+      setRoomUser(s.roomUser);
+      setSpectating(!!s.spectating);
+      if (s.spectating) net.spectate(s.roomId, s.roomUser);
+      else net.joinRoom(s.roomId, s.roomUser);
+      setPhase("room");
+    } catch (e) {
+    }
+  }, []);
   const [roomSeats, setRoomSeats] = useState(null);
   const [roomRules, setRoomRules] = useState(null);
   const [pickStart, setPickStart] = useState(null);
@@ -2058,8 +2080,10 @@ function NFLDraftSimulator() {
     if (!roomSeats) return false;
     const mine = Object.keys(roomSeats).find((k) => roomSeats[k].user === roomUser);
     if (!mine) return false;
-    const lowest = Object.keys(roomSeats).map(Number).sort((a, b) => a - b)[0];
-    return Number(mine) === lowest;
+    const present = new Set(roomLive && roomLive.players || []);
+    const candidates = Object.keys(roomSeats).filter((k) => present.has(roomSeats[k].user)).map(Number).sort((a, b) => a - b);
+    if (!candidates.length) return false;
+    return Number(mine) === candidates[0];
   })();
   useEffect(() => {
     const h = (location.hash || "").replace(/^#/, "");
@@ -2644,7 +2668,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-082155";
+const APP_VERSION = "20260804-093846";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2666,7 +2690,7 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.42";
+const APP_RELEASE = "5.2.45";
 const CHANGELOG = [
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
@@ -2844,12 +2868,13 @@ const net = {
           players: v[k].players ? Object.keys(v[k].players) : [],
           spectators: v[k].spectators ? Object.keys(v[k].spectators) : []
         }));
-        const live = all.filter((r) => r.players.length + r.spectators.length > 0);
+        const live = all.filter((r) => r.players.length + r.spectators.length > 0 || r.status === "drafting");
         cb(live);
         const GRACE = 10 * 60 * 1e3;
         const now = Date.now();
         all.forEach((r) => {
           if (r.players.length + r.spectators.length > 0) return;
+          if (r.status === "drafting") return;
           const age = now - (r.createdAt || now);
           const idle = now - (r.startedAt || r.createdAt || now);
           if (age > GRACE && idle > GRACE) {
@@ -4365,7 +4390,16 @@ function DraftScreen(props) {
     ),
     tab === "myteam" && /* @__PURE__ */ React.createElement(MyTeamTab, { team: teams[userSlot - 1], draftComplete, onReset, onMovePlayer }),
     tab === "board" && /* @__PURE__ */ React.createElement(BoardTab, { teams, picks, userSlot }),
-    tab === "grade" && /* @__PURE__ */ React.createElement(GradeTab, { picks, userSlot, teams })
+    tab === "grade" && (draftComplete ? /* @__PURE__ */ React.createElement(CompletionScreen, {
+      picks,
+      userSlot,
+      teams,
+      roomId,
+      roomSeats,
+      embedded: true,
+      onClose: null,
+      onNewDraft: null
+    }) : /* @__PURE__ */ React.createElement(GradeTab, { picks, userSlot, teams }))
   );
 }
 function PosTag({ pos }) {
@@ -4979,7 +5013,7 @@ function teamWriteup(r, team, picksForTeam, compRank, startRank) {
   }
   return bits.join(" ");
 }
-function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId, roomSeats }) {
+function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId, roomSeats, embedded }) {
   const [copied, setCopied] = useState(false);
   const [peek, setPeek] = useState(null);
   const userIndex = userSlot - 1;
@@ -5039,10 +5073,10 @@ function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId,
   }
   return React.createElement(
     "div",
-    { className: "done-backdrop" },
+    { className: embedded ? "done-embed" : "done-backdrop" },
     React.createElement(
       "div",
-      { className: "done-card" },
+      { className: "done-card" + (embedded ? " done-card-embed" : "") },
       (() => {
         const rowsH = teams.map((t2, i) => ({ i, v: compositeWeekly(picks.filter((p) => p.teamIndex === i).map((p) => p.player)) }));
         const sortedH = rowsH.slice().sort((a, b) => b.v - a.v);
@@ -5322,8 +5356,12 @@ function CompletionScreen({ picks, userSlot, teams, onClose, onNewDraft, roomId,
         { className: "done-copy", onClick: copySummary },
         copied ? "COPIED" : "COPY SUMMARY"
       ),
-      React.createElement("button", { className: "done-close", onClick: onClose }, "REVIEW MY TEAM"),
-      React.createElement("button", { className: "done-new", onClick: onNewDraft }, roomId ? "BACK TO LOBBY" : "NEW DRAFT")
+      embedded ? null : React.createElement(
+        React.Fragment,
+        null,
+        React.createElement("button", { className: "done-close", onClick: onClose }, "REVIEW MY TEAM"),
+        React.createElement("button", { className: "done-new", onClick: onNewDraft }, roomId ? "BACK TO LOBBY" : "NEW DRAFT")
+      )
     )
   );
 }
@@ -6028,6 +6066,9 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
    is taller than the viewport \u2014 which the league table made it. Using auto
    margins centres it when it fits and lets it scroll from the top when it
    doesn't. */
+.done-embed { display: block; }
+.done-card-embed { max-width: 100%; margin: 0; animation: none;
+  background: transparent; border: none; box-shadow: none; padding: 0 0 8px; }
 .done-backdrop { position: fixed; inset: 0; z-index: 120; background: rgba(3,10,6,0.88);
   backdrop-filter: blur(6px); display: flex; justify-content: center;
   padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px));
