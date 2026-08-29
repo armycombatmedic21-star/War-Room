@@ -697,7 +697,8 @@ function loadDraft() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
-    if (!s || !Array.isArray(s.pickIds) || !s.pickIds.length) return null;
+    if (!s || !Array.isArray(s.pickIds)) return null;
+    if (!s.pickIds.length && !s.toolMode) return null;
     return s;
   } catch (e) {
     return null;
@@ -1042,35 +1043,35 @@ const REAL_PROJ = {
   "49ers": 93.5,
   "A.J. Brown": 178,
   "AJ Barner": 86,
-  "Aaron Rodgers": 233,
+  "Aaron Rodgers": 234,
   "Alec Pierce": 157,
   "Amon-Ra St. Brown": 195,
   "Andres Borregales": 125,
-  "Ashton Jeanty": 218,
-  "Baker Mayfield": 335,
+  "Ashton Jeanty": 177,
+  "Baker Mayfield": 333,
   "Bears": 118.8,
   "Bengals": 114.6,
-  "Bhayshul Tuten": 167,
-  "Bijan Robinson": 297,
+  "Bhayshul Tuten": 164,
+  "Bijan Robinson": 269,
   "Bills": 119.5,
   "Bo Nix": 314,
   "Brandon Aubrey": 153,
-  "Breece Hall": 188,
+  "Breece Hall": 165,
   "Brenton Strange": 102,
   "Brian Thomas Jr.": 118,
   "Brock Bowers": 144,
   "Brock Purdy": 350,
   "Broncos": 156.9,
   "Browns": 133.8,
-  "Bryce Young": 272,
+  "Bryce Young": 293,
   "Buccaneers": 109.1,
   "Bucky Irving": 179,
-  "C.J. Stroud": 311,
+  "C.J. Stroud": 310,
   "Cade Otton": 87,
   "Cairo Santos": 142,
-  "Caleb Williams": 342,
+  "Caleb Williams": 349,
   "Cam Little": 131,
-  "Cam Skattebo": 190,
+  "Cam Skattebo": 184,
   "Cam Ward": 259,
   "Cameron Dicker": 144,
   "Cardinals": 81.2,
@@ -1083,9 +1084,9 @@ const REAL_PROJ = {
   "Chiefs": 105.4,
   "Chigoziem Okonkwo": 70,
   "Chris Olave": 175,
-  "Christian McCaffrey": 215,
+  "Christian McCaffrey": 226,
   "Christian Watson": 126,
-  "Chuba Hubbard": 141,
+  "Chuba Hubbard": 122,
   "Colby Parkinson": 73,
   "Cole Kmet": 45,
   "Colston Loveland": 138,
@@ -1093,7 +1094,7 @@ const REAL_PROJ = {
   "Commanders": 104.3,
   "Courtland Sutton": 135,
   "Cowboys": 81,
-  "D'Andre Swift": 183,
+  "D'Andre Swift": 185,
   "D.J. Moore": 125,
   "DK Metcalf": 123,
   "Dak Prescott": 361,
@@ -1103,16 +1104,16 @@ const REAL_PROJ = {
   "Daniel Jones": 324,
   "Darnell Washington": 40,
   "Davante Adams": 138,
-  "David Montgomery": 145,
+  "David Montgomery": 155,
   "David Njoku": 68,
   "Dawson Knox": 50,
   "De'Von Achane": 227,
   "DeVonta Smith": 142,
-  "Derrick Henry": 256,
-  "Deshaun Watson": 148,
+  "Derrick Henry": 259,
+  "Deshaun Watson": 200,
   "Dolphins": 97.8,
   "Drake London": 216,
-  "Drake Maye": 362,
+  "Drake Maye": 349,
   "Eagles": 136.7,
   "Eddy Pineiro": 130,
   "Eli Stowers": 32,
@@ -1120,9 +1121,9 @@ const REAL_PROJ = {
   "Evan Engram": 56,
   "Evan McPherson": 134,
   "Falcons": 130,
-  "Fernando Mendoza": 198,
+  "Fernando Mendoza": 194,
   "Garrett Wilson": 139,
-  "Geno Smith": 239,
+  "Geno Smith": 248,
   "George Kittle": 117,
   "George Pickens": 191,
   "Giants": 83.1,
@@ -1133,9 +1134,9 @@ const REAL_PROJ = {
   "Harrison Mevis": 142,
   "Hunter Henry": 99,
   "Isaiah Likely": 119,
-  "J.K. Dobbins": 137,
+  "J.K. Dobbins": 147,
   "Ja'Marr Chase": 207,
-  "Jacoby Brissett": 284,
+  "Jacoby Brissett": 278,
   "Jacory Croskey-Merritt": 125,
   "Jadarian Price": 158,
   "Jaguars": 103.5,
@@ -1146,37 +1147,36 @@ const REAL_PROJ = {
   "Jake Moody": 124,
   "Jake Tonges": 30,
   "Jalen Hurts": 348,
-  "James Cook": 213,
+  "James Cook": 214,
   "Jameson Williams": 149,
-  "Jared Goff": 336,
+  "Jared Goff": 337,
   "Jason Myers": 167,
   "Jason Sanders": 125,
   "Javonte Williams": 169,
   "Jaxon Smith-Njigba": 219,
-  "Jaxson Dart": 352,
-  "Jayden Daniels": 362,
+  "Jaxson Dart": 346,
+  "Jayden Daniels": 354,
   "Jaylen Waddle": 126,
-  "Jaylen Warren": 135,
-  "Jeremiyah Love": 176,
+  "Jaylen Warren": 131,
+  "Jeremiyah Love": 174,
   "Jets": 74.8,
   "Joe Burrow": 350,
   "Joey Slye": 121,
-  "Jonathan Taylor": 276,
-  "Jordan Love": 300,
+  "Jonathan Taylor": 274,
+  "Jonathon Brooks": 136,
+  "Jordan Love": 307,
   "Jordan Mason": 126,
   "Josh Allen": 402,
-  "Josh Jacobs": 204,
-  "Justin Herbert": 338,
+  "Josh Jacobs": 178,
+  "Justin Herbert": 334,
   "Justin Jefferson": 153,
   "Juwan Johnson": 98,
   "Ka'imi Fairbairn": 157,
-  "Kenneth Gainwell": 115,
-  "Kenneth Walker": 165,
+  "Kenneth Walker": 182,
   "Kenyon Sadiq": 80,
   "Kirk Cousins": 38,
-  "Kyle Monangai": 118,
   "Kyle Pitts": 126,
-  "Kyler Murray": 304,
+  "Kyler Murray": 315,
   "Kyren Williams": 193,
   "Ladd McConkey": 128,
   "Lamar Jackson": 362,
@@ -1189,11 +1189,12 @@ const REAL_PROJ = {
   "Mason Taylor": 62,
   "Matthew Stafford": 341,
   "Michael Mayer": 39,
+  "Michael Penix Jr.": 161,
   "Mike Evans": 122,
   "Mike Gesicki": 64,
   "Nick Folk": 151,
   "Nico Collins": 169,
-  "Omarion Hampton": 183,
+  "Omarion Hampton": 172,
   "Oronde Gadsden II": 77,
   "Packers": 105.4,
   "Panthers": 99.9,
@@ -1203,22 +1204,21 @@ const REAL_PROJ = {
   "Patriots": 114.8,
   "Puka Nacua": 231,
   "Quentin Johnston": 122,
-  "Quinshon Judkins": 162,
-  "RJ Harvey": 141,
+  "Quinshon Judkins": 163,
+  "RJ Harvey": 128,
   "Raiders": 90.2,
   "Rams": 113.9,
   "Rashee Rice": 188,
   "Ravens": 108.1,
-  "Rhamondre Stevenson": 138,
-  "Rico Dowdle": 154,
+  "Rhamondre Stevenson": 133,
+  "Rico Dowdle": 137,
   "Riley Patterson": 119,
   "Rome Odunze": 141,
   "Saints": 120.9,
   "Sam Darnold": 315,
   "Sam LaPorta": 119,
-  "Saquon Barkley": 208,
+  "Saquon Barkley": 203,
   "Seahawks": 143.8,
-  "Shedeur Sanders": 97,
   "Spencer Shrader": 153,
   "Steelers": 126.7,
   "T.J. Hockenson": 68,
@@ -1230,14 +1230,14 @@ const REAL_PROJ = {
   "Theo Johnson": 60,
   "Titans": 95.7,
   "Tommy Tremble": 30,
-  "Tony Pollard": 139,
+  "Tony Pollard": 133,
   "Travis Etienne": 177,
   "Travis Kelce": 108,
-  "TreVeyon Henderson": 151,
-  "Trevor Lawrence": 346,
+  "TreVeyon Henderson": 140,
+  "Trevor Lawrence": 357,
   "Trey McBride": 148,
   "Trey Smack": 122,
-  "Tua Tagovailoa": 254,
+  "Tua Tagovailoa": 101,
   "Tucker Kraft": 132,
   "Tyler Bass": 124,
   "Tyler Loop": 136,
@@ -1252,13 +1252,14 @@ const REAL_PROJ = {
 const PROJ_CURVE = {
   DST: [156.9, 155.9, 143.8, 137.8, 136.7, 133.8, 130, 128.7, 126.9, 126.7, 120.9, 119.5, 118.8, 114.8, 114.6, 113.9, 109.1, 108.1, 105.4, 105.4, 104.3, 103.6, 103.5, 99.9, 97.8, 95.7, 93.5, 90.2, 83.1, 81.2, 81, 74.8],
   K: [167, 157, 153, 151, 146, 144, 142, 142, 141, 138, 136, 135, 134, 134, 131, 130, 127, 125, 124, 124, 122, 121, 119, 118, 115],
-  QB: [402, 362, 362, 362, 361, 352, 350, 350, 348, 346, 345, 342, 341, 338, 336, 335, 324, 315, 315, 314, 311, 308, 304, 300, 284, 272, 259, 254, 239, 233, 198, 148, 97, 38],
-  RB: [297, 297, 276, 256, 227, 218, 215, 213, 212, 208, 204, 193, 190, 188, 183, 183, 179, 177, 176, 169, 167, 165, 162, 158, 154, 151, 145, 141, 141, 139, 138, 137, 135, 126, 125, 118, 115],
+  QB: [402, 362, 361, 357, 354, 350, 350, 349, 349, 348, 346, 345, 341, 337, 334, 333, 324, 315, 315, 315, 314, 310, 308, 307, 293, 278, 259, 248, 234, 200, 194, 161, 101, 38],
+  RB: [297, 274, 269, 259, 227, 226, 214, 212, 203, 193, 185, 184, 182, 179, 178, 177, 177, 174, 172, 169, 165, 164, 163, 158, 155, 147, 140, 137, 136, 133, 133, 131, 128, 126, 125, 122],
   TE: [148, 144, 138, 136, 132, 126, 125, 125, 119, 119, 117, 109, 108, 108, 102, 99, 98, 93, 87, 86, 85, 80, 78, 77, 73, 71, 70, 68, 68, 64, 63, 62, 60, 56, 50, 48, 45, 40, 39, 32, 30, 30],
   WR: [231, 219, 216, 207, 195, 191, 188, 178, 175, 169, 166, 161, 161, 157, 156, 153, 153, 151, 149, 142, 141, 141, 139, 138, 135, 129, 128, 128, 126, 126, 125, 125, 123, 122, 122, 118]
 };
 const REAL_PROJ_NORM = {};
 for (const k in REAL_PROJ) REAL_PROJ_NORM[normName(k)] = REAL_PROJ[k];
+for (const p of PLAYERS) p.projEstimated = REAL_PROJ_NORM[normName(p.name)] == null;
 function projectedPoints(pos, posRank) {
   const curve = PROJ_CURVE[pos];
   if (!curve || !curve.length) return 0;
@@ -1336,7 +1337,7 @@ function eligibleStartingSlots(pos) {
   if (pos === "DST") return ["DST"];
   return [];
 }
-function buildTeams(picks, userSlot, userName, draftSeed, manualSlots) {
+function buildTeams(picks, userSlot, userName, draftSeed, manualSlots, teamNames) {
   const teams = Array.from({ length: NUM_TEAMS }, (_, i) => {
     const order = ARCHETYPES.map((_2, k) => k);
     for (let k = order.length - 1; k > 0; k--) {
@@ -1349,7 +1350,8 @@ function buildTeams(picks, userSlot, userName, draftSeed, manualSlots) {
     return {
       index: i,
       isUser: i === userSlot - 1,
-      name: i === userSlot - 1 ? userName || "Your Team" : `Team ${i + 1}`,
+      // Draft Tool supplies a real name for every seat; a mock only names yours.
+      name: teamNames && teamNames[i] ? teamNames[i] : i === userSlot - 1 ? userName || "Your Team" : `Team ${i + 1}`,
       slots: emptySlots(),
       archetypeName: archetype.name,
       archetypeBias: archetype.bias,
@@ -1797,7 +1799,10 @@ const __LOGIC__ = {
   qbAnxiety,
   newDraftSeed,
   validatePlayerPool,
-  REPLACEMENT_PTS
+  REPLACEMENT_PTS,
+  saveDraft,
+  loadDraft,
+  clearDraft
 };
 const GRADE_COLORS = {
   "A+": "#3E9C6B",
@@ -2022,6 +2027,8 @@ class Boundary extends React.Component {
 }
 function NFLDraftSimulator() {
   const [phase, setPhase] = useState("setup");
+  const [toolMode, setToolMode] = useState(false);
+  const [toolNames, setToolNames] = useState(null);
   const [userSlot, setUserSlot] = useState(null);
   const [userName, setUserName] = useState(() => {
     try {
@@ -2075,6 +2082,12 @@ function NFLDraftSimulator() {
       if (s.spectating) net.spectate(s.roomId, s.roomUser);
       else net.joinRoom(s.roomId, s.roomUser);
       setPhase("room");
+      const wake = () => {
+        if (document.visibilityState !== "visible") return;
+        if (s.spectating) net.spectate(s.roomId, s.roomUser);
+        else net.joinRoom(s.roomId, s.roomUser);
+      };
+      document.addEventListener("visibilitychange", wake);
     } catch (e) {
     }
   }, []);
@@ -2157,6 +2170,8 @@ function NFLDraftSimulator() {
     setUserName(entry.userName || "");
     setDraftSeed(entry.draftSeed);
     setManualSlots(entry.manualSlots || {});
+    setToolMode(!!entry.toolMode);
+    setToolNames(entry.toolNames || null);
     if (entry.positionBias) setPositionBias(entry.positionBias);
     if (entry.cpuTuning) setCpuTuning({ ...CPU_DEFAULTS, ...entry.cpuTuning });
     setPicks(rebuilt);
@@ -2190,6 +2205,8 @@ function NFLDraftSimulator() {
     setUserName(s.userName || "");
     setDraftSeed(s.draftSeed);
     setManualSlots(s.manualSlots || {});
+    setToolMode(!!s.toolMode);
+    setToolNames(s.toolNames || null);
     if (s.positionBias) setPositionBias(s.positionBias);
     if (s.cpuTuning) setCpuTuning({ ...CPU_DEFAULTS, ...s.cpuTuning });
     setPicks(rebuilt);
@@ -2213,7 +2230,8 @@ function NFLDraftSimulator() {
   const [picks, setPicks] = useState([]);
   const [draftSeed, setDraftSeed] = useState(() => newDraftSeed());
   useEffect(() => {
-    if (phase !== "drafting" || !picks.length || autoRun) return;
+    if (phase !== "drafting" || autoRun) return;
+    if (!picks.length && !toolMode) return;
     const state = {
       id: draftId,
       pickIds: picks.map((p) => p.player.id),
@@ -2221,6 +2239,8 @@ function NFLDraftSimulator() {
       userName,
       draftSeed,
       manualSlots,
+      toolMode,
+      toolNames,
       positionBias,
       cpuTuning,
       savedAt: Date.now(),
@@ -2231,7 +2251,7 @@ function NFLDraftSimulator() {
     };
     saveDraft(state);
     upsertHistory(state);
-  }, [picks.length, phase, autoRun]);
+  }, [picks.length, phase, autoRun, toolMode, toolNames]);
   useEffect(() => {
     if (phase !== "drafting" || picks.length < TOTAL_PICKS || autoRun) return;
     if (completeShownRef.current) return;
@@ -2283,13 +2303,13 @@ function NFLDraftSimulator() {
     }
     setPicks(next);
   }, [autoRun, rerunning, phase, picks.length, draftSeed]);
-  const teams = useMemo(() => buildTeams(picks, userSlot || 1, userName, draftSeed, manualSlots), [picks, userSlot, userName, draftSeed, manualSlots]);
+  const teams = useMemo(() => buildTeams(picks, userSlot || 1, userName, draftSeed, manualSlots, toolNames), [picks, userSlot, userName, draftSeed, manualSlots, toolNames]);
   const pickNumber = picks.length + 1;
   const draftComplete = picks.length >= TOTAL_PICKS;
   const round = Math.min(Math.ceil(pickNumber / NUM_TEAMS), ROUNDS);
   const pickInRound = pickNumber - (round - 1) * NUM_TEAMS;
   const currentTeamIndex = draftComplete ? null : getTeamIndexForPick(pickNumber);
-  const isUserTurn = !draftComplete && currentTeamIndex === userSlot - 1;
+  const isUserTurn = !draftComplete && (toolMode || currentTeamIndex === userSlot - 1);
   useEffect(() => {
     if (!roomId || !amAuthority || phase !== "drafting" || draftComplete) return;
     net.markPickStart(roomId, pickNumber);
@@ -2319,6 +2339,10 @@ function NFLDraftSimulator() {
   }
   useEffect(() => {
     if (phase !== "drafting" || draftComplete) return;
+    if (toolMode) {
+      pickingRef.current = false;
+      return;
+    }
     if (isUserTurn) {
       pickingRef.current = false;
       return;
@@ -2355,11 +2379,12 @@ function NFLDraftSimulator() {
     for (let i = picks.length - 1; i >= 0; i--) if (picks[i].teamIndex === userSlot - 1) return i;
     return -1;
   }, [picks, userSlot]);
-  const canUndo = userLastPickIndex >= 0;
+  const undoTarget = toolMode ? picks.length - 1 : userLastPickIndex;
+  const canUndo = undoTarget >= 0;
   function undoLastPick() {
     if (!canUndo) return;
     pickingRef.current = false;
-    setPicks((prev) => prev.slice(0, userLastPickIndex));
+    setPicks((prev) => prev.slice(0, undoTarget));
   }
   function movePlayer(playerId, targetSlot) {
     const t = teams[(userSlot || 1) - 1];
@@ -2375,6 +2400,24 @@ function NFLDraftSimulator() {
       return next;
     });
   }
+  function exitToSetup() {
+    setResumeOffer(loadDraft());
+    setTab("players");
+    setPhase(roomId ? "lobby" : "setup");
+  }
+  function resetTool() {
+    clearDraft();
+    setResumeOffer(null);
+    setDraftId(Date.now());
+    setHistory(loadHistory());
+    completeShownRef.current = false;
+    setShowComplete(false);
+    setPicks([]);
+    setManualSlots({});
+    setDraftSeed(newDraftSeed());
+    setTab("players");
+    setPhase("tool");
+  }
   function resetDraft() {
     clearDraft();
     setDraftId(Date.now());
@@ -2383,6 +2426,8 @@ function NFLDraftSimulator() {
     setShowComplete(false);
     setPicks([]);
     setManualSlots({});
+    setToolMode(false);
+    setToolNames(null);
     setDraftSeed(newDraftSeed());
     setUserSlot(null);
     setUserName("");
@@ -2396,7 +2441,7 @@ function NFLDraftSimulator() {
     setFilter("ALL");
     setSearch("");
   }
-  return /* @__PURE__ */ React.createElement("div", { className: "app", style: { minHeight: "100vh", background: "radial-gradient(ellipse at top, #1d3123 0%, #0c150f 55%, #060b08 100%)", color: "#F1EDE1", fontFamily: "'Inter', sans-serif" } }, launching && /* @__PURE__ */ React.createElement("div", { className: "launch-bloom", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("style", null, CSS), showComplete && userSlot ? /* @__PURE__ */ React.createElement(CompletionScreen, { picks, userSlot, teams, roomId, roomSeats, onClose: () => {
+  return React.createElement("div", { className: "app", style: { minHeight: "100vh", background: "radial-gradient(ellipse at top, #1d3123 0%, #0c150f 55%, #060b08 100%)", color: "#F1EDE1", fontFamily: "'Inter', sans-serif" } }, launching && React.createElement("div", { className: "launch-bloom", "aria-hidden": "true" }), React.createElement("style", null, CSS), showComplete && userSlot ? React.createElement(CompletionScreen, { picks, userSlot, teams, roomId, roomSeats, onClose: () => {
     setShowComplete(false);
     setTab("myteam");
   }, onNewDraft: () => {
@@ -2406,40 +2451,40 @@ function NFLDraftSimulator() {
       resetDraft();
       setPhase("lobby");
     } else resetDraft();
-  } }) : resumeOffer && phase === "setup" ? /* @__PURE__ */ React.createElement(
+  } }) : resumeOffer && !resumeOffer.toolMode && phase === "setup" ? React.createElement(
     "div",
     { className: "resume-backdrop" },
-    /* @__PURE__ */ React.createElement(
+    React.createElement(
       "div",
       { className: "resume-card" },
-      /* @__PURE__ */ React.createElement("div", { className: "resume-glow", "aria-hidden": "true" }),
-      /* @__PURE__ */ React.createElement("div", { className: "resume-kicker mono" }, "DRAFT IN PROGRESS"),
-      /* @__PURE__ */ React.createElement(
+      React.createElement("div", { className: "resume-glow", "aria-hidden": "true" }),
+      React.createElement("div", { className: "resume-kicker mono" + (resumeOffer.toolMode ? " resume-kicker-tool" : "") }, resumeOffer.toolMode ? "DRAFT TOOL IN PROGRESS" : "MOCK DRAFT IN PROGRESS"),
+      React.createElement(
         "div",
         { className: "resume-picks mono" },
         resumeOffer.pickIds.length,
-        /* @__PURE__ */ React.createElement("span", { className: "resume-picks-of" }, " / " + TOTAL_PICKS)
+        React.createElement("span", { className: "resume-picks-of" }, " / " + TOTAL_PICKS)
       ),
-      /* @__PURE__ */ React.createElement(
+      React.createElement(
         "div",
         { className: "resume-meta" },
-        "Pick " + resumeOffer.userSlot + " \xB7 round " + Math.ceil((resumeOffer.pickIds.length + 1) / NUM_TEAMS)
+        resumeOffer.toolMode && resumeOffer.toolNames && resumeOffer.toolNames[resumeOffer.userSlot - 1] ? "Seat " + resumeOffer.userSlot + " \u2014 " + resumeOffer.toolNames[resumeOffer.userSlot - 1] + " \xB7 round " + Math.ceil((resumeOffer.pickIds.length + 1) / NUM_TEAMS) : "Pick " + resumeOffer.userSlot + " \xB7 round " + Math.ceil((resumeOffer.pickIds.length + 1) / NUM_TEAMS)
       ),
-      resumeOffer.opening && resumeOffer.opening.length ? /* @__PURE__ */ React.createElement("div", { className: "resume-open" }, resumeOffer.opening.join(" \xB7 ")) : null,
-      /* @__PURE__ */ React.createElement(
+      resumeOffer.toolMode ? React.createElement("div", { className: "resume-open" }, (resumeOffer.toolNames || []).filter((n) => n).slice(0, 4).join(" \xB7 ") + ((resumeOffer.toolNames || []).filter((n) => n).length > 4 ? " \u2026" : "")) : resumeOffer.opening && resumeOffer.opening.length ? React.createElement("div", { className: "resume-open" }, resumeOffer.opening.join(" \xB7 ")) : null,
+      React.createElement(
         "button",
         { className: "resume-go", onClick: resumeSaved },
-        /* @__PURE__ */ React.createElement("span", { className: "resume-btn-main" }, "RESUME DRAFT"),
-        /* @__PURE__ */ React.createElement("span", { className: "resume-btn-sub" }, "Pick up where you left off")
+        React.createElement("span", { className: "resume-btn-main" }, "RESUME DRAFT"),
+        React.createElement("span", { className: "resume-btn-sub" }, "Pick up where you left off")
       ),
-      /* @__PURE__ */ React.createElement(
+      React.createElement(
         "button",
         { className: "resume-no", onClick: discardSaved },
-        /* @__PURE__ */ React.createElement("span", { className: "resume-btn-main" }, "START NEW"),
-        /* @__PURE__ */ React.createElement("span", { className: "resume-btn-sub" }, "This draft stays in your history")
+        React.createElement("span", { className: "resume-btn-main" }, "START NEW"),
+        React.createElement("span", { className: "resume-btn-sub" }, "This draft stays in your history")
       )
     )
-  ) : phase === "room" ? /* @__PURE__ */ React.createElement(DraftRoomScreen, { roomId, username: roomUser, spectating, onLeave: () => {
+  ) : phase === "room" ? React.createElement(DraftRoomScreen, { roomId, username: roomUser, spectating, onLeave: () => {
     setRoomId(null);
     setPhase("lobby");
   }, onStart: (room, slot) => {
@@ -2448,21 +2493,46 @@ function NFLDraftSimulator() {
     setRoomRules({ noCopilot: !!room.noCopilot, noGodsEye: !!room.noGodsEye, noAutopick: !!room.noAutopick, timerLen: room.timerLen || 90 });
     setUserSlot(slot);
     setUserName(room.seats[slot] && room.seats[slot].teamName || roomUser);
+    setToolMode(false);
+    setToolNames(null);
     setDraftSeed(newDraftSeed());
     setPicks([]);
     setDraftId(Date.now());
     setLaunching(true);
     setPhase("drafting");
     setTimeout(() => setLaunching(false), 1e3);
-  } }) : phase === "lobby" ? /* @__PURE__ */ React.createElement(LobbyScreen, { onLeave: () => setPhase("setup"), onEnterRoom: (id, user, watch) => {
+  } }) : phase === "tool" ? React.createElement(DraftToolScreen, {
+    defaultNames: toolNames,
+    defaultSeat: userSlot,
+    onLeave: () => setPhase("setup"),
+    onStart: (names, seat) => {
+      setToolNames(names);
+      setToolMode(true);
+      setUserSlot(seat);
+      setUserName(names[seat - 1] || "Your Team");
+      setDraftSeed(newDraftSeed());
+      setAutoRun(false);
+      setLaunching(true);
+      setPhase("drafting");
+      setTimeout(() => setLaunching(false), 1e3);
+    }
+  }) : phase === "lobby" ? React.createElement(LobbyScreen, { onLeave: () => setPhase("setup"), onEnterRoom: (id, user, watch) => {
     setRoomId(id);
     setRoomUser(user);
     setSpectating(!!watch);
     setPhase("room");
-  } }) : phase === "setup" ? /* @__PURE__ */ React.createElement(
+  } }) : phase === "setup" ? React.createElement(
     SetupScreen,
     {
       onOpenLobby: () => setPhase("lobby"),
+      // Draft Tool is a place you come back to, not a wizard you re-run. If a
+      // session is saved, the button returns you to it; the name entry screen
+      // is only for starting one.
+      toolInProgress: resumeOffer && resumeOffer.toolMode ? resumeOffer : null,
+      onOpenTool: () => {
+        if (resumeOffer && resumeOffer.toolMode) resumeSaved();
+        else setPhase("tool");
+      },
       history,
       onOpenHistory: openHistoryEntry,
       onDeleteHistory: (id) => {
@@ -2482,6 +2552,8 @@ function NFLDraftSimulator() {
       setCpuTuning,
       setPositionBias,
       onStart: (auto) => {
+        setToolMode(false);
+        setToolNames(null);
         setDraftSeed(newDraftSeed());
         setAutoRun(!!auto);
         setLaunching(!auto);
@@ -2489,7 +2561,7 @@ function NFLDraftSimulator() {
         if (!auto) setTimeout(() => setLaunching(false), 1e3);
       }
     }
-  ) : /* @__PURE__ */ React.createElement(
+  ) : React.createElement(
     DraftScreen,
     {
       roomId,
@@ -2512,10 +2584,11 @@ function NFLDraftSimulator() {
       onRerun: rerunAuto,
       rerunning,
       onMovePlayer: movePlayer,
+      toolMode,
       launching,
       canUndo,
       onUndo: undoLastPick,
-      undoCount: picks.length - userLastPickIndex,
+      undoCount: picks.length - undoTarget,
       sortBy,
       setSortBy,
       picks,
@@ -2537,7 +2610,9 @@ function NFLDraftSimulator() {
       availableAll: available,
       availableCount: available.length,
       onDraft: makePick,
-      onReset: resetDraft
+      onReset: resetDraft,
+      onExit: exitToSetup,
+      onResetTool: resetTool
     }
   ));
 }
@@ -2578,7 +2653,7 @@ function slotProfile(slot) {
   if (slot >= 5 && slot <= 8) return { tag: "MIDDLE", note: "Even cadence all draft" };
   return { tag: "TURN", note: "Balanced value and cadence" };
 }
-function SetupScreen({ onOpenLobby, userSlot, setUserSlot, userName, setUserName, positionBias, setPositionBias, cpuTuning, setCpuTuning, onStart, history, onOpenHistory, onDeleteHistory, onPinHistory }) {
+function SetupScreen({ onOpenLobby, onOpenTool, toolInProgress, userSlot, setUserSlot, userName, setUserName, positionBias, setPositionBias, cpuTuning, setCpuTuning, onStart, history, onOpenHistory, onDeleteHistory, onPinHistory }) {
   const [verOpen, setVerOpen] = useState(false);
   const [starting, setStarting] = useState(false);
   function handleStart() {
@@ -2588,7 +2663,7 @@ function SetupScreen({ onOpenLobby, userSlot, setUserSlot, userName, setUserName
   }
   const slotPicks = userSlot ? picksForSlot(userSlot) : null;
   const profile = userSlot ? slotProfile(userSlot) : null;
-  return /* @__PURE__ */ React.createElement("div", { className: "setup" }, /* @__PURE__ */ React.createElement(VersionPanel, { open: verOpen, onClose: () => setVerOpen(false) }), /* @__PURE__ */ React.createElement("div", { className: "setup-hero" }, /* @__PURE__ */ React.createElement("div", { className: "hero-field", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "eyebrow-row" }, React.createElement("span", { className: "eyebrow" }, "MOCK DRAFT \xB7 2026 SEASON"), React.createElement(VersionBadge, { onOpen: () => setVerOpen(true) })), /* @__PURE__ */ React.createElement("h1", { className: "title" }, "WAR ROOM"), /* @__PURE__ */ React.createElement("div", { className: "stat-chips" }, /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, NUM_TEAMS), " TEAMS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, ROUNDS), " ROUNDS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, TOTAL_PICKS), " PICKS"), /* @__PURE__ */ React.createElement("span", { className: "stat-chip" }, /* @__PURE__ */ React.createElement("b", null, "NON"), "-PPR"))), /* @__PURE__ */ React.createElement("div", { className: "card setup-card", style: GLASS_CARD_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "card-label" }, "Team name ", /* @__PURE__ */ React.createElement("span", { className: "muted" }, "(optional)")), /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "setup" }, React.createElement(VersionPanel, { open: verOpen, onClose: () => setVerOpen(false) }), React.createElement("div", { className: "setup-hero" }, React.createElement("div", { className: "hero-field", "aria-hidden": "true" }), React.createElement("div", { className: "eyebrow-row" }, React.createElement("span", { className: "eyebrow" }, "MOCK DRAFT \xB7 2026 SEASON"), React.createElement(VersionBadge, { onOpen: () => setVerOpen(true) })), React.createElement("h1", { className: "title" }, "WAR ROOM"), React.createElement("div", { className: "stat-chips" }, React.createElement("span", { className: "stat-chip" }, React.createElement("b", null, NUM_TEAMS), " TEAMS"), React.createElement("span", { className: "stat-chip" }, React.createElement("b", null, ROUNDS), " ROUNDS"), React.createElement("span", { className: "stat-chip" }, React.createElement("b", null, TOTAL_PICKS), " PICKS"), React.createElement("span", { className: "stat-chip" }, React.createElement("b", null, "NON"), "-PPR"))), React.createElement("div", { className: "card setup-card", style: GLASS_CARD_STYLE }, React.createElement("div", { className: "card-label" }, "Team name ", React.createElement("span", { className: "muted" }, "(optional)")), React.createElement(
     "input",
     {
       className: "text-input",
@@ -2597,19 +2672,19 @@ function SetupScreen({ onOpenLobby, userSlot, setUserSlot, userName, setUserName
       maxLength: 24,
       onChange: (e) => setUserName(e.target.value)
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "setup-divider" }), /* @__PURE__ */ React.createElement("div", { className: "card-label" }, "Choose your draft slot"), /* @__PURE__ */ React.createElement("div", { className: "slot-grid" }, Array.from({ length: NUM_TEAMS }, (_, i) => i + 1).map((n) => {
+  ), React.createElement("div", { className: "setup-divider" }), React.createElement("div", { className: "card-label" }, "Choose your draft slot"), React.createElement("div", { className: "slot-grid" }, Array.from({ length: NUM_TEAMS }, (_, i) => i + 1).map((n) => {
     const picks = picksForSlot(n);
-    return /* @__PURE__ */ React.createElement(
+    return React.createElement(
       "button",
       {
         key: n,
         className: "slot-chip" + (userSlot === n ? " slot-chip-active" : ""),
         onClick: () => setUserSlot(n)
       },
-      /* @__PURE__ */ React.createElement("span", { className: "slot-num" }, n),
-      /* @__PURE__ */ React.createElement("span", { className: "slot-picks mono" }, picks[0], "\xB7", picks[1])
+      React.createElement("span", { className: "slot-num" }, n),
+      React.createElement("span", { className: "slot-picks mono" }, picks[0], "\xB7", picks[1])
     );
-  })), userSlot && /* @__PURE__ */ React.createElement("div", { className: "slot-readout" }, /* @__PURE__ */ React.createElement("div", { className: "slot-readout-head" }, /* @__PURE__ */ React.createElement("span", { className: "slot-readout-title" }, "You pick ", /* @__PURE__ */ React.createElement("b", null, ordinal(userSlot)), " overall"), /* @__PURE__ */ React.createElement("span", { className: "slot-tag" }, profile.tag)), /* @__PURE__ */ React.createElement("div", { className: "slot-readout-note" }, profile.note), /* @__PURE__ */ React.createElement("div", { className: "slot-readout-picks mono" }, slotPicks.slice(0, 6).map((pn) => /* @__PURE__ */ React.createElement("span", { key: pn, className: "pick-num" }, pn)), /* @__PURE__ */ React.createElement("span", { className: "pick-more" }, "+", slotPicks.length - 6, " more")))), /* @__PURE__ */ React.createElement(
+  })), userSlot && React.createElement("div", { className: "slot-readout" }, React.createElement("div", { className: "slot-readout-head" }, React.createElement("span", { className: "slot-readout-title" }, "You pick ", React.createElement("b", null, ordinal(userSlot)), " overall"), React.createElement("span", { className: "slot-tag" }, profile.tag)), React.createElement("div", { className: "slot-readout-note" }, profile.note), React.createElement("div", { className: "slot-readout-picks mono" }, slotPicks.slice(0, 6).map((pn) => React.createElement("span", { key: pn, className: "pick-num" }, pn)), React.createElement("span", { className: "pick-more" }, "+", slotPicks.length - 6, " more")))), React.createElement(
     "button",
     {
       className: "start-btn" + (starting ? " is-starting" : ""),
@@ -2623,9 +2698,9 @@ function SetupScreen({ onOpenLobby, userSlot, setUserSlot, userName, setUserName
         boxShadow: userSlot ? "0 10px 24px rgba(232,179,61,0.35), inset 0 2px 2px rgba(255,255,255,0.6), inset 0 -4px 8px rgba(120,74,10,0.45)" : "none"
       }
     },
-    starting && /* @__PURE__ */ React.createElement("span", { className: "draft-fx start-fx", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-tl" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-tr" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-bl" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-br" })),
+    starting && React.createElement("span", { className: "draft-fx start-fx", "aria-hidden": "true" }, React.createElement("i", { className: "fx-spark fx-tl" }), React.createElement("i", { className: "fx-spark fx-tr" }), React.createElement("i", { className: "fx-spark fx-bl" }), React.createElement("i", { className: "fx-spark fx-br" })),
     userSlot ? `START DRAFT \u2014 PICK 1.${String(userSlot).padStart(2, "0")}` : "PICK A DRAFT SLOT"
-  ), /* @__PURE__ */ React.createElement("button", { className: "mp-bar", onClick: onOpenLobby }, /* @__PURE__ */ React.createElement("span", { className: "mp-bar-left" }, /* @__PURE__ */ React.createElement("span", { className: "mp-dot" }), /* @__PURE__ */ React.createElement("span", { className: "mp-text" }, /* @__PURE__ */ React.createElement("span", { className: "mp-title mono" }, "MULTIPLAYER ONLINE"), /* @__PURE__ */ React.createElement("span", { className: "mp-sub" }, "Draft live against your league"))), /* @__PURE__ */ React.createElement("span", { className: "mp-chev" }, "\u203A")), /* @__PURE__ */ React.createElement(CpuStrategyPanel, { positionBias, setPositionBias, cpuTuning, setCpuTuning, onRunAnalysis: () => onStart(true) }), /* @__PURE__ */ React.createElement(DraftHistoryPanel, { history, onOpen: onOpenHistory, onDelete: onDeleteHistory, onPin: onPinHistory }));
+  ), React.createElement("button", { className: "mp-bar", onClick: onOpenLobby }, React.createElement("span", { className: "mp-bar-left" }, React.createElement("span", { className: "mp-dot" }), React.createElement("span", { className: "mp-text" }, React.createElement("span", { className: "mp-title mono" }, "MULTIPLAYER ONLINE"), React.createElement("span", { className: "mp-sub" }, "Draft live against your league"))), React.createElement("span", { className: "mp-chev" }, "\u203A")), React.createElement("button", { className: "mp-bar tool-bar" + (toolInProgress ? " tool-bar-live" : ""), onClick: onOpenTool }, React.createElement("span", { className: "mp-bar-left" }, React.createElement("span", { className: "mp-dot tool-dot" }), React.createElement("span", { className: "mp-text" }, React.createElement("span", { className: "mp-title mono" }, toolInProgress ? "RESUME DRAFT TOOL" : "DRAFT TOOL"), React.createElement("span", { className: "mp-sub" }, toolInProgress ? toolInProgress.pickIds.length ? "In progress \u2014 " + toolInProgress.pickIds.length + " of " + TOTAL_PICKS + " picks in" : "Set up \u2014 not started yet" : "Track a real draft \u2014 you enter every pick"))), React.createElement("span", { className: "mp-chev" }, "\u203A")), React.createElement(CpuStrategyPanel, { positionBias, setPositionBias, cpuTuning, setCpuTuning, onRunAnalysis: () => onStart(true) }), React.createElement(DraftHistoryPanel, { history, onOpen: onOpenHistory, onDelete: onDeleteHistory, onPin: onPinHistory }));
 }
 const CPU_PRESETS = [
   { key: "balanced", name: "Balanced", desc: "Tuned default room", tuning: { ...CPU_DEFAULTS } },
@@ -2672,7 +2747,7 @@ const CPU_KNOBS = [
 ];
 function ValueBox({ value, onChange }) {
   const [draft, setDraft] = useState(null);
-  return /* @__PURE__ */ React.createElement(
+  return React.createElement(
     "input",
     {
       type: "text",
@@ -2698,7 +2773,7 @@ function ValueBox({ value, onChange }) {
   );
 }
 function TuneSlider({ value, onChange, label, low, high, help }) {
-  return /* @__PURE__ */ React.createElement("div", { className: "knob" }, /* @__PURE__ */ React.createElement("div", { className: "knob-head" }, /* @__PURE__ */ React.createElement("span", { className: "knob-label mono" }, label), /* @__PURE__ */ React.createElement(ValueBox, { value, onChange })), /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "knob" }, React.createElement("div", { className: "knob-head" }, React.createElement("span", { className: "knob-label mono" }, label), React.createElement(ValueBox, { value, onChange })), React.createElement(
     "input",
     {
       type: "range",
@@ -2708,9 +2783,9 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
       onChange: (e) => onChange(Number(e.target.value)),
       className: "bias-slider knob-slider"
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "knob-ends" }, /* @__PURE__ */ React.createElement("span", null, low), /* @__PURE__ */ React.createElement("span", null, high)), /* @__PURE__ */ React.createElement("div", { className: "knob-help" }, help));
+  ), React.createElement("div", { className: "knob-ends" }, React.createElement("span", null, low), React.createElement("span", null, high)), React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260804-115914";
+const APP_VERSION = "20260829-132928";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2732,8 +2807,27 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.60";
+const APP_RELEASE = "5.2.67";
 const CHANGELOG = [
+  {
+    v: "5.2.67",
+    notes: [
+      "DRAFT TOOL now drops you straight back into a session in progress \u2014 the bar shows how many picks are in.",
+      "Reset Draft Tool added to draft settings: discards the draft and returns to team names, seats still filled in.",
+      "Fixed: leaving a tool session could leave the next mock draft with no CPU picks.",
+      "Draft Tool sessions now save the moment the draft opens, so twelve typed seat names survive a phone dying before pick one.",
+      "Resume card says which kind of session it is \u2014 Draft Tool or mock \u2014 and lists the seats.",
+      "New Back to setup in draft settings. Leaves without discarding; the resume card brings it back.",
+      "Draft Tool: pick clock is off by default \u2014 the real room has its own.",
+      "Draft Tool: undo steps back one pick from any seat, instead of rewinding to your own last selection.",
+      "New Draft Tool. Name all twelve seats, mark your own, then enter every pick yourself \u2014 for tracking a real draft while Copilot and God's Eye read the live board.",
+      "Last-pick strip is a fixed single row now \u2014 long names and team names truncate instead of wrapping, so the board stops jumping between picks.",
+      "QB projections rebuilt from scratch off CBS 2026 non-PPR \u2014 the old set was half-applied (Tua was carrying a starter's 254 as ATL's backup; he projects 101).",
+      "RB projections refreshed from the same CBS non-PPR table.",
+      "Interpolated PROJ values now carry a projEstimated flag instead of passing as published numbers.",
+      "Build toolchain and test suites restored."
+    ]
+  },
   { v: "5.2", notes: [
     "Mini Board above the player list \u2014 watch the draft move without switching tabs",
     "Live countdown when another manager is on the clock",
@@ -3737,6 +3831,117 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
     )
   );
 }
+function DraftToolScreen({ onLeave, onStart, defaultNames, defaultSeat }) {
+  const [names, setNames] = useState(
+    () => Array.from({ length: NUM_TEAMS }, (_, i) => defaultNames && defaultNames[i] || "")
+  );
+  const [seat, setSeat] = useState(defaultSeat || null);
+  const [starting, setStarting] = useState(false);
+  const named = names.filter((n) => n.trim()).length;
+  const ready = seat != null;
+  function setName(i, v) {
+    setNames((prev) => {
+      const next = prev.slice();
+      next[i] = v;
+      return next;
+    });
+  }
+  function handleStart() {
+    if (!ready || starting) return;
+    setStarting(true);
+    const filled = names.map((n, i) => n.trim() || `Team ${i + 1}`);
+    setTimeout(() => onStart(filled, seat), 620);
+  }
+  return React.createElement(
+    "div",
+    { className: "setup tool-screen" },
+    React.createElement(
+      "div",
+      { className: "tool-head" },
+      React.createElement("button", { className: "tool-back", onClick: onLeave }, "\u2039 BACK"),
+      React.createElement("span", { className: "tool-head-title mono" }, "DRAFT TOOL")
+    ),
+    React.createElement(
+      "div",
+      { className: "tool-intro" },
+      React.createElement("div", { className: "tool-intro-title" }, "Track a live draft"),
+      React.createElement(
+        "div",
+        { className: "tool-intro-sub" },
+        "Name every seat, mark your own, then enter each pick as it happens. Nothing is auto-picked \u2014 Copilot and God's Eye read the real board."
+      )
+    ),
+    React.createElement(
+      "div",
+      { className: "card tool-card" },
+      React.createElement("div", { className: "card-label" }, "Teams and draft order"),
+      React.createElement(
+        "div",
+        { className: "tool-hint" },
+        "Seat 1 picks first. Tap the seat number to mark it as yours."
+      ),
+      React.createElement(
+        "div",
+        { className: "tool-list" },
+        names.map((n, i) => {
+          const num = i + 1;
+          const mine = seat === num;
+          const p = picksForSlot(num);
+          return React.createElement(
+            "div",
+            { key: num, className: "tool-row" + (mine ? " tool-row-mine" : "") },
+            React.createElement(
+              "button",
+              {
+                className: "tool-seat" + (mine ? " tool-seat-mine" : ""),
+                onClick: () => setSeat(mine ? null : num),
+                title: mine ? "This is your seat" : "Mark seat " + num + " as yours"
+              },
+              num
+            ),
+            React.createElement("input", {
+              className: "text-input tool-input",
+              placeholder: `Team ${num}`,
+              value: n,
+              maxLength: 24,
+              onChange: (e) => setName(i, e.target.value)
+            }),
+            React.createElement("span", { className: "tool-picks mono" }, p[0], "\xB7", p[1])
+          );
+        })
+      )
+    ),
+    React.createElement(
+      "div",
+      { className: "tool-status" },
+      ready ? React.createElement(
+        React.Fragment,
+        null,
+        "You are seat ",
+        React.createElement("b", null, seat),
+        " \u2014 ",
+        React.createElement("b", null, names[seat - 1].trim() || `Team ${seat}`),
+        ", picking ",
+        ordinal(seat),
+        " overall."
+      ) : "Pick your seat to continue.",
+      named > 0 && named < NUM_TEAMS ? React.createElement(
+        "span",
+        { className: "tool-status-sub" },
+        ` ${NUM_TEAMS - named} unnamed seat${NUM_TEAMS - named === 1 ? "" : "s"} will use their number.`
+      ) : null
+    ),
+    React.createElement(
+      "button",
+      {
+        className: "room-start" + (ready ? " tool-start" : " room-start-off"),
+        disabled: !ready || starting,
+        onClick: handleStart
+      },
+      starting ? "STARTING\u2026" : "START DRAFT TOOL"
+    )
+  );
+}
 function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
   const [room, setRoom] = useState(null);
   const [teamName, setTeamName] = useState(() => loadUsername() || "");
@@ -3791,9 +3996,14 @@ function DraftRoomScreen({ roomId, username, onLeave, onStart, spectating }) {
       net.startDraft(roomId);
     }
   }, [secsLeft, isCommish, room && room.status, roomId]);
+  const handedOff = useRef(false);
   useEffect(() => {
-    if (room && room.status === "drafting" && (mySlot || spectating)) onStart(room, mySlot ? Number(mySlot) : 0);
-  }, [room && room.status]);
+    if (!room || room.status !== "drafting") return;
+    if (!mySlot && !spectating) return;
+    if (handedOff.current) return;
+    handedOff.current = true;
+    onStart(room, mySlot ? Number(mySlot) : 0);
+  }, [room && room.status, mySlot, spectating]);
   function claim(slot) {
     if (room && room.chaos) return;
     if (seats[slot] && seats[slot].user !== username) return;
@@ -4042,16 +4252,16 @@ function CpuStrategyPanel({ positionBias, setPositionBias, cpuTuning, setCpuTuni
     setPositionBias({ QB: 50, RB: 50, WR: 50, TE: 50, DST: 50, K: 50 });
     setCpuTuning({ ...CPU_DEFAULTS });
   }
-  return /* @__PURE__ */ React.createElement("div", { className: "strategy-panel", style: { background: "rgba(27,43,32,0.52)", backdropFilter: "blur(14px) saturate(140%)", WebkitBackdropFilter: "blur(14px) saturate(140%)", border: "1px solid rgba(241,237,225,0.08)", borderRadius: 12, boxShadow: "0 3px 10px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.035)" } }, /* @__PURE__ */ React.createElement("button", { className: "strategy-toggle", onClick: () => setOpen((o) => !o) }, /* @__PURE__ */ React.createElement("span", null, "DRAFT SETTINGS"), /* @__PURE__ */ React.createElement("span", { className: "strategy-toggle-right" }, !isNeutral && /* @__PURE__ */ React.createElement("span", { className: "strategy-dot" }), /* @__PURE__ */ React.createElement("span", { className: "strategy-chevron" + (open ? " strategy-chevron-open" : "") }, "\u25BE"))), open && /* @__PURE__ */ React.createElement("div", { className: "strategy-body" }, /* @__PURE__ */ React.createElement("div", { className: "cpu-section-label mono" }, "ROOM PRESET"), /* @__PURE__ */ React.createElement("div", { className: "preset-row" }, CPU_PRESETS.map((pr) => /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "strategy-panel", style: { background: "rgba(27,43,32,0.52)", backdropFilter: "blur(14px) saturate(140%)", WebkitBackdropFilter: "blur(14px) saturate(140%)", border: "1px solid rgba(241,237,225,0.08)", borderRadius: 12, boxShadow: "0 3px 10px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.035)" } }, React.createElement("button", { className: "strategy-toggle", onClick: () => setOpen((o) => !o) }, React.createElement("span", null, "DRAFT SETTINGS"), React.createElement("span", { className: "strategy-toggle-right" }, !isNeutral && React.createElement("span", { className: "strategy-dot" }), React.createElement("span", { className: "strategy-chevron" + (open ? " strategy-chevron-open" : "") }, "\u25BE"))), open && React.createElement("div", { className: "strategy-body" }, React.createElement("div", { className: "cpu-section-label mono" }, "ROOM PRESET"), React.createElement("div", { className: "preset-row" }, CPU_PRESETS.map((pr) => React.createElement(
     "button",
     {
       key: pr.key,
       className: "preset-btn" + (activePreset && activePreset.key === pr.key ? " preset-btn-active" : ""),
       onClick: () => applyPreset(pr)
     },
-    /* @__PURE__ */ React.createElement("span", { className: "preset-name" }, pr.name),
-    /* @__PURE__ */ React.createElement("span", { className: "preset-desc" }, pr.desc)
-  ))), /* @__PURE__ */ React.createElement("div", { className: "cpu-section-label mono" }, "ROOM BEHAVIOR"), CPU_KNOBS.map((k) => /* @__PURE__ */ React.createElement(
+    React.createElement("span", { className: "preset-name" }, pr.name),
+    React.createElement("span", { className: "preset-desc" }, pr.desc)
+  ))), React.createElement("div", { className: "cpu-section-label mono" }, "ROOM BEHAVIOR"), CPU_KNOBS.map((k) => React.createElement(
     TuneSlider,
     {
       key: k.key,
@@ -4062,7 +4272,7 @@ function CpuStrategyPanel({ positionBias, setPositionBias, cpuTuning, setCpuTuni
       high: k.high,
       help: k.help
     }
-  )), /* @__PURE__ */ React.createElement("div", { className: "cpu-section-label mono" }, "POSITION PRIORITY"), /* @__PURE__ */ React.createElement("p", { className: "strategy-hint muted small" }, "Nudge how much CPU managers value each position. 50 is neutral \u2014 higher makes them draft it earlier, lower makes them avoid it. Type directly into any box to set an exact value."), POS_ORDER.map((pos) => /* @__PURE__ */ React.createElement("div", { className: "bias-row", key: pos }, /* @__PURE__ */ React.createElement("div", { className: "bias-row-label" }, /* @__PURE__ */ React.createElement(PosTag, { pos }), /* @__PURE__ */ React.createElement(ValueBox, { value: positionBias[pos], onChange: (v) => updateBias(pos, v) })), /* @__PURE__ */ React.createElement(
+  )), React.createElement("div", { className: "cpu-section-label mono" }, "POSITION PRIORITY"), React.createElement("p", { className: "strategy-hint muted small" }, "Nudge how much CPU managers value each position. 50 is neutral \u2014 higher makes them draft it earlier, lower makes them avoid it. Type directly into any box to set an exact value."), POS_ORDER.map((pos) => React.createElement("div", { className: "bias-row", key: pos }, React.createElement("div", { className: "bias-row-label" }, React.createElement(PosTag, { pos }), React.createElement(ValueBox, { value: positionBias[pos], onChange: (v) => updateBias(pos, v) })), React.createElement(
     "input",
     {
       type: "range",
@@ -4072,16 +4282,16 @@ function CpuStrategyPanel({ positionBias, setPositionBias, cpuTuning, setCpuTuni
       onChange: (e) => updateBias(pos, Number(e.target.value)),
       className: "bias-slider" + (positionBias[pos] === 50 ? "" : positionBias[pos] > 50 ? " bias-slider-high" : " bias-slider-low")
     }
-  ))), !isNeutral && /* @__PURE__ */ React.createElement("button", { className: "strategy-reset", onClick: resetAll }, "RESET ALL TO DEFAULT"), /* @__PURE__ */ React.createElement("div", { className: "cpu-section-label mono" }, "CPU ENGINE"), /* @__PURE__ */ React.createElement(
+  ))), !isNeutral && React.createElement("button", { className: "strategy-reset", onClick: resetAll }, "RESET ALL TO DEFAULT"), React.createElement("div", { className: "cpu-section-label mono" }, "CPU ENGINE"), React.createElement(
     "button",
     {
       className: "noise-row" + (cpuTuning.legacyEngine ? " noise-on" : ""),
       onClick: () => setCpuTuning({ ...cpuTuning, legacyEngine: !cpuTuning.legacyEngine }),
       "aria-pressed": !!cpuTuning.legacyEngine
     },
-    /* @__PURE__ */ React.createElement("span", { className: "noise-text" }, /* @__PURE__ */ React.createElement("span", { className: "noise-title" }, "Value engine (legacy)"), /* @__PURE__ */ React.createElement("span", { className: "noise-sub" }, cpuTuning.legacyEngine ? "Older model \u2014 scores VORP, scarcity and roster fit" : "Off \u2014 using ADP + noise (recommended)")),
-    /* @__PURE__ */ React.createElement("span", { className: "cwswitch" + (cpuTuning.legacyEngine ? " cwswitch-on" : "") }, /* @__PURE__ */ React.createElement("span", { className: "cwknob" }))
-  ), !cpuTuning.legacyEngine && /* @__PURE__ */ React.createElement("div", { className: "tune-row" }, /* @__PURE__ */ React.createElement("div", { className: "tune-head" }, /* @__PURE__ */ React.createElement("span", { className: "tune-name" }, "NOISE SPREAD"), /* @__PURE__ */ React.createElement("span", { className: "tune-val" }, "\xB1", cpuTuning.noiseSpread ?? 11)), /* @__PURE__ */ React.createElement(
+    React.createElement("span", { className: "noise-text" }, React.createElement("span", { className: "noise-title" }, "Value engine (legacy)"), React.createElement("span", { className: "noise-sub" }, cpuTuning.legacyEngine ? "Older model \u2014 scores VORP, scarcity and roster fit" : "Off \u2014 using ADP + noise (recommended)")),
+    React.createElement("span", { className: "cwswitch" + (cpuTuning.legacyEngine ? " cwswitch-on" : "") }, React.createElement("span", { className: "cwknob" }))
+  ), !cpuTuning.legacyEngine && React.createElement("div", { className: "tune-row" }, React.createElement("div", { className: "tune-head" }, React.createElement("span", { className: "tune-name" }, "NOISE SPREAD"), React.createElement("span", { className: "tune-val" }, "\xB1", cpuTuning.noiseSpread ?? 11)), React.createElement(
     "input",
     {
       type: "range",
@@ -4091,13 +4301,13 @@ function CpuStrategyPanel({ positionBias, setPositionBias, cpuTuning, setCpuTuni
       onChange: (e) => setCpuTuning({ ...cpuTuning, noiseSpread: Number(e.target.value) }),
       className: "bias-slider"
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "tune-ends" }, /* @__PURE__ */ React.createElement("span", null, "Chalky"), /* @__PURE__ */ React.createElement("span", null, "Chaotic"))), onRunAnalysis && /* @__PURE__ */ React.createElement("button", { className: "devrun-btn", onClick: onRunAnalysis }, "\u25B6 RUN DEVELOPMENT ANALYSIS")));
+  ), React.createElement("div", { className: "tune-ends" }, React.createElement("span", null, "Chalky"), React.createElement("span", null, "Chaotic"))), onRunAnalysis && React.createElement("button", { className: "devrun-btn", onClick: onRunAnalysis }, "\u25B6 RUN DEVELOPMENT ANALYSIS")));
 }
 function DraftScreen(props) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
-  const [timerOn, setTimerOn] = useState(true);
+  const [timerOn, setTimerOn] = useState(!props.toolMode);
   const [timerLen, setTimerLen] = useState(60);
   const [copilot, setCopilot] = useState(false);
   const [copilotIgniting, setCopilotIgniting] = useState(false);
@@ -4158,6 +4368,8 @@ function DraftScreen(props) {
     availableCount,
     onDraft,
     onReset,
+    onExit,
+    onResetTool,
     sortBy,
     setSortBy,
     canUndo,
@@ -4165,6 +4377,7 @@ function DraftScreen(props) {
     undoCount,
     launching,
     onMovePlayer,
+    toolMode,
     availableAll,
     autoRun,
     onRerun,
@@ -4277,34 +4490,34 @@ function DraftScreen(props) {
     });
     return map;
   }, [teams, userSlot]);
-  return /* @__PURE__ */ React.createElement(
+  return React.createElement(
     "div",
     { className: "draft" + (launching ? " is-entering" : "") },
-    /* @__PURE__ */ React.createElement("div", { className: "field-bar" }, /* @__PURE__ */ React.createElement("div", { className: "field-track" }, Array.from({ length: 11 }, (_, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "yard-line", style: { left: `${(i + 1) * (100 / 12)}%` } })), /* @__PURE__ */ React.createElement("div", { className: "field-progress", style: { width: `${progressPct}%` } }), /* @__PURE__ */ React.createElement("div", { className: "field-ball", style: { left: `${progressPct}%` } }, "\u{1F3C8}")), /* @__PURE__ */ React.createElement("div", { className: "field-meta" }, /* @__PURE__ */ React.createElement("span", { className: "mono" }, draftComplete ? "FINAL" : `RD ${round} \xB7 PICK ${pickInRound}/12`), /* @__PURE__ */ React.createElement("span", { className: "field-meta-right" }, /* @__PURE__ */ React.createElement("span", { className: "mono muted" }, Math.min(pickNumber, TOTAL_PICKS), "/", TOTAL_PICKS), confirmReset ? /* @__PURE__ */ React.createElement("span", { className: "restart-confirm" }, /* @__PURE__ */ React.createElement("button", { className: "restart-yes mono", onClick: onReset }, roomId ? "RETURN TO LOBBY?" : "LEAVE DRAFT?"), /* @__PURE__ */ React.createElement("button", { className: "restart-no mono", onClick: () => setConfirmReset(false) }, "CANCEL")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "home-btn", onClick: () => setConfirmReset(true), "aria-label": "Home" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 10.5 12 3l9 7.5" }), /* @__PURE__ */ React.createElement("path", { d: "M5 9.8V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.8" }))), /* @__PURE__ */ React.createElement("button", { className: "gear-btn" + (roomId && !isCommish ? " gear-hidden" : ""), onClick: () => setGearOpen(true), "aria-label": "Draft settings" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "3.2" }), /* @__PURE__ */ React.createElement("path", { d: "M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" }))))))),
-    draftComplete ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-done", style: { background: "linear-gradient(180deg, #4CB47D, #3E9C6B)", color: "#0F1A13", borderColor: "transparent", borderRadius: 12 } }, "DRAFT COMPLETE \u2014 check My Team for your final roster") : isUserTurn ? /* @__PURE__ */ React.createElement("div", { className: "clock-banner clock-user", key: "clk" + pickNumber }, /* @__PURE__ */ React.createElement("span", { className: "clk-rim", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "clk-body" }, /* @__PURE__ */ React.createElement("span", { className: "clk-left" }, /* @__PURE__ */ React.createElement("span", { className: "clk-head mono" }, spectating ? "SPECTATING" : "YOU'RE ON THE CLOCK"), /* @__PURE__ */ React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)), timerOn && /* @__PURE__ */ React.createElement("span", { className: "clk-time mono clk-" + clockTone + (clockPct <= 0.15 && clockLeft > 0 ? " clk-flash" : "") }, clockFmt))) : /* @__PURE__ */ React.createElement(
+    React.createElement("div", { className: "field-bar" }, React.createElement("div", { className: "field-track" }, Array.from({ length: 11 }, (_, i) => React.createElement("div", { key: i, className: "yard-line", style: { left: `${(i + 1) * (100 / 12)}%` } })), React.createElement("div", { className: "field-progress", style: { width: `${progressPct}%` } }), React.createElement("div", { className: "field-ball", style: { left: `${progressPct}%` } }, "\u{1F3C8}")), React.createElement("div", { className: "field-meta" }, React.createElement("span", { className: "mono" }, draftComplete ? "FINAL" : `RD ${round} \xB7 PICK ${pickInRound}/12`), React.createElement("span", { className: "field-meta-right" }, React.createElement("span", { className: "mono muted" }, Math.min(pickNumber, TOTAL_PICKS), "/", TOTAL_PICKS), confirmReset ? React.createElement("span", { className: "restart-confirm" }, React.createElement("button", { className: "restart-yes mono", onClick: onReset }, roomId ? "RETURN TO LOBBY?" : "LEAVE DRAFT?"), React.createElement("button", { className: "restart-no mono", onClick: () => setConfirmReset(false) }, "CANCEL")) : React.createElement(React.Fragment, null, React.createElement("button", { className: "home-btn", onClick: () => setConfirmReset(true), "aria-label": "Home" }, React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M3 10.5 12 3l9 7.5" }), React.createElement("path", { d: "M5 9.8V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.8" }))), React.createElement("button", { className: "gear-btn" + (roomId && !isCommish ? " gear-hidden" : ""), onClick: () => setGearOpen(true), "aria-label": "Draft settings" }, React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2" }, React.createElement("circle", { cx: "12", cy: "12", r: "3.2" }), React.createElement("path", { d: "M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" }))))))),
+    draftComplete ? React.createElement("div", { className: "clock-banner clock-done", style: { background: "linear-gradient(180deg, #4CB47D, #3E9C6B)", color: "#0F1A13", borderColor: "transparent", borderRadius: 12 } }, "DRAFT COMPLETE \u2014 check My Team for your final roster") : isUserTurn ? React.createElement("div", { className: "clock-banner clock-user", key: "clk" + pickNumber }, React.createElement("span", { className: "clk-rim", "aria-hidden": "true" }), React.createElement("span", { className: "clk-body" }, React.createElement("span", { className: "clk-left" }, React.createElement("span", { className: "clk-head mono" }, spectating ? "SPECTATING" : toolMode ? currentTeamIndex === userSlot - 1 ? "YOUR PICK" : "ENTER PICK \u2014 " + (teams[currentTeamIndex]?.name || "TEAM " + (currentTeamIndex + 1)).toUpperCase() : "YOU'RE ON THE CLOCK"), React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)), timerOn && React.createElement("span", { className: "clk-time mono clk-" + clockTone + (clockPct <= 0.15 && clockLeft > 0 ? " clk-flash" : "") }, clockFmt))) : React.createElement(
       "div",
       { className: "clock-banner clock-them" + (onClockSeat ? " clock-them-human" : "") },
-      /* @__PURE__ */ React.createElement(
+      React.createElement(
         "span",
         { className: "clk-body" },
-        /* @__PURE__ */ React.createElement("span", { className: "dot-pulse" }),
-        /* @__PURE__ */ React.createElement(
+        React.createElement("span", { className: "dot-pulse" }),
+        React.createElement(
           "span",
           { className: "clk-left" },
-          /* @__PURE__ */ React.createElement(
+          React.createElement(
             "span",
             { className: "them-head" },
             onClockName,
-            /* @__PURE__ */ React.createElement("span", { className: "them-tail" }, onClockSeat ? " is on the clock" : " is picking")
+            React.createElement("span", { className: "them-tail" }, onClockSeat ? " is on the clock" : " is picking")
           ),
-          /* @__PURE__ */ React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)
+          React.createElement("span", { className: "clk-sub mono" }, "PICK #", pickNumber, " \xB7 ROUND ", round)
         ),
-        onClockSeat && timerOn ? /* @__PURE__ */ React.createElement("span", {
+        onClockSeat && timerOn ? React.createElement("span", {
           className: "clk-time mono clk-" + themTone + (themPct <= 0.15 && themLeft > 0 ? " clk-flash" : "")
         }, themFmt) : null
       )
     ),
-    /* @__PURE__ */ React.createElement(LastPickStrip, { picks, teams, canUndo: canUndo && !roomId, onUndo, undoCount }),
+    React.createElement(LastPickStrip, { picks, teams, canUndo: canUndo && !roomId, onUndo, undoCount }),
     (() => {
       if (!roomId || !roomSeats) return null;
       const human = picks.slice().reverse().find((pk) => roomSeats[pk.teamIndex + 1]);
@@ -4324,26 +4537,26 @@ function DraftScreen(props) {
         React.createElement("span", { className: "hp-pick mono" }, "#" + human.pickNumber)
       );
     })(),
-    autoRun && /* @__PURE__ */ React.createElement("div", { className: "devbar" }, /* @__PURE__ */ React.createElement("span", { className: "devbar-label mono" }, "DEVELOPMENT ANALYSIS"), /* @__PURE__ */ React.createElement("span", { className: "devbar-meta" }, rerunning ? "simulating\u2026" : `${picks.length}/${TOTAL_PICKS} picks`), /* @__PURE__ */ React.createElement("button", { className: "devbar-btn", onClick: onRerun, disabled: rerunning }, "\u21BB RERUN")),
-    blocked && /* @__PURE__ */ React.createElement(
+    autoRun && React.createElement("div", { className: "devbar" }, React.createElement("span", { className: "devbar-label mono" }, "DEVELOPMENT ANALYSIS"), React.createElement("span", { className: "devbar-meta" }, rerunning ? "simulating\u2026" : `${picks.length}/${TOTAL_PICKS} picks`), React.createElement("button", { className: "devbar-btn", onClick: onRerun, disabled: rerunning }, "\u21BB RERUN")),
+    blocked && React.createElement(
       "div",
       { className: "blk-backdrop", onClick: () => setBlocked(null) },
-      /* @__PURE__ */ React.createElement(
+      React.createElement(
         "div",
         { className: "blk-card", onClick: (e) => e.stopPropagation() },
-        /* @__PURE__ */ React.createElement("div", { className: "blk-icon" }, "\u26D4"),
-        /* @__PURE__ */ React.createElement("div", { className: "blk-title mono" }, blocked, " DISABLED"),
-        /* @__PURE__ */ React.createElement(
+        React.createElement("div", { className: "blk-icon" }, "\u26D4"),
+        React.createElement("div", { className: "blk-title mono" }, blocked, " DISABLED"),
+        React.createElement(
           "div",
           { className: "blk-body" },
           "The commissioner turned ",
           blocked === "COPILOT" ? "Copilot" : "God's Eye",
           " off for this room. Everyone drafts without it."
         ),
-        /* @__PURE__ */ React.createElement("button", { className: "blk-close", onClick: () => setBlocked(null) }, "GOT IT")
+        React.createElement("button", { className: "blk-close", onClick: () => setBlocked(null) }, "GOT IT")
       )
     ),
-    godsLock && /* @__PURE__ */ React.createElement(CopilotLock, {
+    godsLock && React.createElement(CopilotLock, {
       gold: true,
       title: "GOD'S EYE LOCKED",
       code: "1987",
@@ -4355,7 +4568,7 @@ function DraftScreen(props) {
       },
       onClose: () => setGodsLock(false)
     }),
-    lockOpen && /* @__PURE__ */ React.createElement(CopilotLock, {
+    lockOpen && React.createElement(CopilotLock, {
       onUnlocked: () => {
         setLockOpen(false);
         setCopilot(true);
@@ -4364,7 +4577,7 @@ function DraftScreen(props) {
       },
       onClose: () => setLockOpen(false)
     }),
-    gearOpen && /* @__PURE__ */ React.createElement("div", { className: "gear-backdrop", onClick: () => setGearOpen(false) }, /* @__PURE__ */ React.createElement("div", { className: "gear-sheet", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "gear-head" }, /* @__PURE__ */ React.createElement("span", { className: "gear-title mono" }, "DRAFT SETTINGS"), /* @__PURE__ */ React.createElement("button", { className: "gear-close", onClick: () => setGearOpen(false) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "gear-label mono" }, "DRAFT TIMER"), /* @__PURE__ */ React.createElement("button", { className: "noise-row" + (timerOn ? " noise-on" : ""), onClick: () => setTimerOn(!timerOn) }, /* @__PURE__ */ React.createElement("span", { className: "noise-text" }, /* @__PURE__ */ React.createElement("span", { className: "noise-title" }, "Show clock on your turn"), /* @__PURE__ */ React.createElement("span", { className: "noise-sub" }, "Counts down only \u2014 never picks for you")), /* @__PURE__ */ React.createElement("span", { className: "cwswitch" + (timerOn ? " cwswitch-on" : "") }, /* @__PURE__ */ React.createElement("span", { className: "cwknob" }))), timerOn && /* @__PURE__ */ React.createElement("div", { className: "gear-chips" }, [30, 60, 90, 120].map((s) => /* @__PURE__ */ React.createElement(
+    gearOpen && React.createElement("div", { className: "gear-backdrop", onClick: () => setGearOpen(false) }, React.createElement("div", { className: "gear-sheet", onClick: (e) => e.stopPropagation() }, React.createElement("div", { className: "gear-head" }, React.createElement("span", { className: "gear-title mono" }, "DRAFT SETTINGS"), React.createElement("button", { className: "gear-close", onClick: () => setGearOpen(false) }, "\u2715")), React.createElement("div", { className: "gear-label mono" }, "DRAFT TIMER"), React.createElement("button", { className: "noise-row" + (timerOn ? " noise-on" : ""), onClick: () => setTimerOn(!timerOn) }, React.createElement("span", { className: "noise-text" }, React.createElement("span", { className: "noise-title" }, "Show clock on your turn"), React.createElement("span", { className: "noise-sub" }, "Counts down only \u2014 never picks for you")), React.createElement("span", { className: "cwswitch" + (timerOn ? " cwswitch-on" : "") }, React.createElement("span", { className: "cwknob" }))), timerOn && React.createElement("div", { className: "gear-chips" }, [30, 60, 90, 120].map((s) => React.createElement(
       "button",
       {
         key: s,
@@ -4373,11 +4586,17 @@ function DraftScreen(props) {
       },
       s,
       "s"
-    ))), /* @__PURE__ */ React.createElement("div", { className: "gear-label mono" }, "CPU INSTANT DRAFT"), /* @__PURE__ */ React.createElement("button", { className: "noise-row" + (cpuInstant ? " noise-on" : ""), onClick: () => setCpuInstant(!cpuInstant) }, /* @__PURE__ */ React.createElement("span", { className: "noise-text" }, /* @__PURE__ */ React.createElement("span", { className: "noise-title" }, "CPU Instant Draft"), /* @__PURE__ */ React.createElement("span", { className: "noise-sub" }, "CPUs pick with no delay between selections")), /* @__PURE__ */ React.createElement("span", { className: "cwswitch" + (cpuInstant ? " cwswitch-on" : "") }, /* @__PURE__ */ React.createElement("span", { className: "cwknob" }))))),
-    /* @__PURE__ */ React.createElement(
+    ))), React.createElement("div", { className: "gear-label mono" }, "CPU INSTANT DRAFT"), React.createElement("button", { className: "noise-row" + (cpuInstant ? " noise-on" : ""), onClick: () => setCpuInstant(!cpuInstant) }, React.createElement("span", { className: "noise-text" }, React.createElement("span", { className: "noise-title" }, "CPU Instant Draft"), React.createElement("span", { className: "noise-sub" }, "CPUs pick with no delay between selections")), React.createElement("span", { className: "cwswitch" + (cpuInstant ? " cwswitch-on" : "") }, React.createElement("span", { className: "cwknob" }))), toolMode && React.createElement(React.Fragment, null, React.createElement("div", { className: "gear-label mono" }, "DRAFT TOOL"), React.createElement("button", { className: "gear-exit gear-reset", onClick: () => {
+      setGearOpen(false);
+      onResetTool();
+    } }, React.createElement("span", { className: "noise-text" }, React.createElement("span", { className: "noise-title" }, "Reset Draft Tool"), React.createElement("span", { className: "noise-sub" }, "Discards this draft and returns to team names")), React.createElement("span", { className: "gear-exit-chev" }, "\u203A"))), React.createElement("div", { className: "gear-label mono" }, "LEAVE"), React.createElement("button", { className: "gear-exit", onClick: () => {
+      setGearOpen(false);
+      onExit();
+    } }, React.createElement("span", { className: "noise-text" }, React.createElement("span", { className: "noise-title" }, "Back to setup"), React.createElement("span", { className: "noise-sub" }, "Saved \u2014 resume from the card on the home screen")), React.createElement("span", { className: "gear-exit-chev" }, "\u203A")))),
+    React.createElement(
       "div",
       { className: "tabbar" },
-      (roomId ? spectating ? [["board", "Board", "\u229E"], ["grade", "Grade", "\u25C8"], ["chat", "Chat", "\u2709"]] : [["players", "Players", "\u25A4"], ["myteam", "My Team", "\u2605"], ["board", "Board", "\u229E"], ["grade", "Grade", "\u25C8"], ["chat", "Chat", "\u2709"]] : [["players", "Players", "\u25A4"], ["myteam", "My Team", "\u2605"], ["board", "Board", "\u229E"], ["grade", "Grade", "\u25C8"]]).map(([key, label, icon]) => /* @__PURE__ */ React.createElement(
+      (roomId ? spectating ? [["board", "Board", "\u229E"], ["grade", "Grade", "\u25C8"], ["chat", "Chat", "\u2709"]] : [["players", "Players", "\u25A4"], ["myteam", "My Team", "\u2605"], ["board", "Board", "\u229E"], ["grade", "Grade", "\u25C8"], ["chat", "Chat", "\u2709"]] : [["players", "Players", "\u25A4"], ["myteam", "My Team", "\u2605"], ["board", "Board", "\u229E"], ["grade", "Grade", "\u25C8"]]).map(([key, label, icon]) => React.createElement(
         "button",
         {
           key,
@@ -4387,18 +4606,18 @@ function DraftScreen(props) {
             if (key === "chat") setUnread(0);
           }
         },
-        /* @__PURE__ */ React.createElement("span", { className: "tabitem-icon" }, icon),
-        /* @__PURE__ */ React.createElement("span", { className: "tabitem-label" }, label),
-        key === "chat" && unread > 0 ? /* @__PURE__ */ React.createElement("span", { className: "tabitem-badge mono" }, unread > 9 ? "9+" : unread) : null
+        React.createElement("span", { className: "tabitem-icon" }, icon),
+        React.createElement("span", { className: "tabitem-label" }, label),
+        key === "chat" && unread > 0 ? React.createElement("span", { className: "tabitem-badge mono" }, unread > 9 ? "9+" : unread) : null
       ))
     ),
-    tab === "chat" && roomId && /* @__PURE__ */ React.createElement(ChatPanel, {
+    tab === "chat" && roomId && React.createElement(ChatPanel, {
       messages: roomChat,
       username: roomUser,
       label: "ROOM CHAT",
       onSend: (t) => net.sendRoomChat(roomId, roomUser, t)
     }),
-    tab === "players" && /* @__PURE__ */ React.createElement(
+    tab === "players" && React.createElement(
       PlayersTab,
       {
         filter,
@@ -4432,9 +4651,9 @@ function DraftScreen(props) {
         cpuTuning
       }
     ),
-    tab === "myteam" && /* @__PURE__ */ React.createElement(MyTeamTab, { team: teams[userSlot - 1], draftComplete, onReset, onMovePlayer }),
-    tab === "board" && /* @__PURE__ */ React.createElement(BoardTab, { teams, picks, userSlot }),
-    tab === "grade" && (draftComplete ? /* @__PURE__ */ React.createElement(CompletionScreen, {
+    tab === "myteam" && React.createElement(MyTeamTab, { team: teams[userSlot - 1], draftComplete, onReset, onMovePlayer }),
+    tab === "board" && React.createElement(BoardTab, { teams, picks, userSlot }),
+    tab === "grade" && (draftComplete ? React.createElement(CompletionScreen, {
       picks,
       userSlot,
       teams,
@@ -4443,12 +4662,12 @@ function DraftScreen(props) {
       embedded: true,
       onClose: null,
       onNewDraft: null
-    }) : /* @__PURE__ */ React.createElement(GradeTab, { picks, userSlot, teams }))
+    }) : React.createElement(GradeTab, { picks, userSlot, teams }))
   );
 }
 function PosTag({ pos }) {
   const color = POS_DARK[pos] || "#8B9296";
-  return /* @__PURE__ */ React.createElement(
+  return React.createElement(
     "span",
     {
       className: "pos-tag",
@@ -4471,7 +4690,7 @@ function adpValueClass(pickNumber, adp) {
 }
 function TeamByeAdp({ team, adp, pickNumber, byeCollides, proj }) {
   const bye = BYE_WEEKS[team];
-  return /* @__PURE__ */ React.createElement("span", { className: "team-bye-adp" }, /* @__PURE__ */ React.createElement("span", { className: "team-abbr" }, team), bye && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "muted" }, " - "), /* @__PURE__ */ React.createElement("span", { className: byeCollides ? "bye-warn" : "muted" }, "Bye: ", bye)), /* @__PURE__ */ React.createElement("span", { className: "muted" }, " \xB7 "), /* @__PURE__ */ React.createElement("span", { className: adpValueClass(pickNumber, adp) }, "ADP ", adp), proj != null && /* @__PURE__ */ React.createElement("span", { className: "roster-proj" }, " \xB7 ", Math.round(proj), " pts"));
+  return React.createElement("span", { className: "team-bye-adp" }, React.createElement("span", { className: "team-abbr" }, team), bye && React.createElement(React.Fragment, null, React.createElement("span", { className: "muted" }, " - "), React.createElement("span", { className: byeCollides ? "bye-warn" : "muted" }, "Bye: ", bye)), React.createElement("span", { className: "muted" }, " \xB7 "), React.createElement("span", { className: adpValueClass(pickNumber, adp) }, "ADP ", adp), proj != null && React.createElement("span", { className: "roster-proj" }, " \xB7 ", Math.round(proj), " pts"));
 }
 const STAT_INFO = {
   PROJ: {
@@ -4505,22 +4724,22 @@ function PlayerSheet({ player, pickNumber, onClose, onDraft, canDraft, moveTarge
   const avg2 = hist && hist.avg;
   const [explain, setExplain] = useState(null);
   const [picking, setPicking] = useState(false);
-  return /* @__PURE__ */ React.createElement("div", { className: "sheet-backdrop", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "sheet", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "sheet-grip" }), /* @__PURE__ */ React.createElement("div", { className: "sheet-head" }, /* @__PURE__ */ React.createElement("span", { className: "pos-tag", style: { background: POS_DARK[p.pos] || "#8B9296", borderRadius: 6, border: "1.5px solid rgba(255,255,255,0.4)" } }, p.pos, p.posRank), /* @__PURE__ */ React.createElement("div", { className: "sheet-title" }, /* @__PURE__ */ React.createElement("div", { className: "sheet-name" }, p.name), /* @__PURE__ */ React.createElement("div", { className: "sheet-sub" }, p.team, bye ? ` \xB7 Bye ${bye}` : "")), /* @__PURE__ */ React.createElement("button", { className: "sheet-close", onClick: onClose }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "sheet-stats" }, [
+  return React.createElement("div", { className: "sheet-backdrop", onClick: onClose }, React.createElement("div", { className: "sheet", onClick: (e) => e.stopPropagation() }, React.createElement("div", { className: "sheet-grip" }), React.createElement("div", { className: "sheet-head" }, React.createElement("span", { className: "pos-tag", style: { background: POS_DARK[p.pos] || "#8B9296", borderRadius: 6, border: "1.5px solid rgba(255,255,255,0.4)" } }, p.pos, p.posRank), React.createElement("div", { className: "sheet-title" }, React.createElement("div", { className: "sheet-name" }, p.name), React.createElement("div", { className: "sheet-sub" }, p.team, bye ? ` \xB7 Bye ${bye}` : "")), React.createElement("button", { className: "sheet-close", onClick: onClose }, "\u2715")), React.createElement("div", { className: "sheet-stats" }, [
     ["PROJ", Math.round(playerPoints(p)), "#8FD6AE"],
     ["VORP", formatVorp(playerVOR(p)), "#E8C97A"],
     ["ADP", (p.adpEstimated ? "~" : "") + p.adp, "#C9D6C9"],
     ["RANK", p.rank, "#B9C6D8"]
-  ].map(([label, val, col]) => /* @__PURE__ */ React.createElement(
+  ].map(([label, val, col]) => React.createElement(
     "button",
     {
       className: "sheet-stat" + (explain === label ? " sheet-stat-open" : ""),
       key: label,
       onClick: () => setExplain(explain === label ? null : label)
     },
-    /* @__PURE__ */ React.createElement("div", { className: "sheet-stat-val", style: { color: col } }, val),
-    /* @__PURE__ */ React.createElement("div", { className: "sheet-stat-label mono" }, label),
-    /* @__PURE__ */ React.createElement("div", { className: "stat-help mono" }, explain === label ? "HIDE" : "MORE INFO")
-  ))), explain && /* @__PURE__ */ React.createElement("div", { className: "stat-explain" }, /* @__PURE__ */ React.createElement("div", { className: "stat-explain-head" }, /* @__PURE__ */ React.createElement("span", { className: "stat-explain-acr mono" }, explain), /* @__PURE__ */ React.createElement("span", { className: "stat-explain-full" }, STAT_INFO[explain].full), /* @__PURE__ */ React.createElement("button", { className: "stat-explain-close", onClick: () => setExplain(null) }, "\u2715")), /* @__PURE__ */ React.createElement("p", { className: "stat-explain-what" }, STAT_INFO[explain].what), /* @__PURE__ */ React.createElement("p", { className: "stat-explain-why" }, /* @__PURE__ */ React.createElement("b", null, "Why it matters:"), " ", STAT_INFO[explain].why)), (() => {
+    React.createElement("div", { className: "sheet-stat-val", style: { color: col } }, val),
+    React.createElement("div", { className: "sheet-stat-label mono" }, label),
+    React.createElement("div", { className: "stat-help mono" }, explain === label ? "HIDE" : "MORE INFO")
+  ))), explain && React.createElement("div", { className: "stat-explain" }, React.createElement("div", { className: "stat-explain-head" }, React.createElement("span", { className: "stat-explain-acr mono" }, explain), React.createElement("span", { className: "stat-explain-full" }, STAT_INFO[explain].full), React.createElement("button", { className: "stat-explain-close", onClick: () => setExplain(null) }, "\u2715")), React.createElement("p", { className: "stat-explain-what" }, STAT_INFO[explain].what), React.createElement("p", { className: "stat-explain-why" }, React.createElement("b", null, "Why it matters:"), " ", STAT_INFO[explain].why)), (() => {
     if (!draftedAt) return null;
     const gap = draftedAt - p.adp;
     const band = p.adpEstimated ? 12 : 7;
@@ -4545,14 +4764,14 @@ function PlayerSheet({ player, pickNumber, onClose, onDraft, canDraft, moveTarge
       ),
       p.adpEstimated ? React.createElement("div", { className: "pv-note" }, "ADP is estimated for this player, so treat the gap loosely.") : null
     );
-  })(), /* @__PURE__ */ React.createElement("div", { className: "sheet-section-label mono" }, "RECENT SEASONS"), last ? /* @__PURE__ */ React.createElement("div", { className: "hist-wrap" }, /* @__PURE__ */ React.createElement("table", { className: "hist" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "YEAR"), /* @__PURE__ */ React.createElement("th", null, "GP"), cols.map(([, l]) => /* @__PURE__ */ React.createElement("th", { key: l }, l)))), /* @__PURE__ */ React.createElement("tbody", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("td", { className: "hist-year" }, last.year), /* @__PURE__ */ React.createElement("td", null, last.games ?? "\u2014"), cols.map(([k]) => /* @__PURE__ */ React.createElement("td", { key: k }, last[k] ?? "\u2014"))), avg2 && /* @__PURE__ */ React.createElement("tr", { className: "hist-avg" }, /* @__PURE__ */ React.createElement("td", { className: "hist-year" }, "3-YR AVG"), /* @__PURE__ */ React.createElement("td", null, avg2.games ?? "\u2014"), cols.map(([k]) => /* @__PURE__ */ React.createElement("td", { key: k }, avg2[k] ?? "\u2014")))))) : /* @__PURE__ */ React.createElement("div", { className: "sheet-empty" }, "Season-by-season stats aren't loaded yet. The 2026 projection above is live; historical production needs a separate data pull."), canDraft && /* @__PURE__ */ React.createElement("button", { className: "sheet-draft draft-btn", onClick: () => {
+  })(), React.createElement("div", { className: "sheet-section-label mono" }, "RECENT SEASONS"), last ? React.createElement("div", { className: "hist-wrap" }, React.createElement("table", { className: "hist" }, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "YEAR"), React.createElement("th", null, "GP"), cols.map(([, l]) => React.createElement("th", { key: l }, l)))), React.createElement("tbody", null, React.createElement("tr", null, React.createElement("td", { className: "hist-year" }, last.year), React.createElement("td", null, last.games ?? "\u2014"), cols.map(([k]) => React.createElement("td", { key: k }, last[k] ?? "\u2014"))), avg2 && React.createElement("tr", { className: "hist-avg" }, React.createElement("td", { className: "hist-year" }, "3-YR AVG"), React.createElement("td", null, avg2.games ?? "\u2014"), cols.map(([k]) => React.createElement("td", { key: k }, avg2[k] ?? "\u2014")))))) : React.createElement("div", { className: "sheet-empty" }, "Season-by-season stats aren't loaded yet. The 2026 projection above is live; historical production needs a separate data pull."), canDraft && React.createElement("button", { className: "sheet-draft draft-btn", onClick: () => {
     onClose();
     onDraft(p);
-  } }, "DRAFT ", p.name.split(" ").slice(-1)[0].toUpperCase()), moveTargets && moveTargets.length > 0 && !picking && /* @__PURE__ */ React.createElement("button", { className: "move-btn", onClick: () => setPicking(true) }, /* @__PURE__ */ React.createElement("span", { className: "move-btn-icon" }, "\u21C5"), moveLabel), picking && /* @__PURE__ */ React.createElement("div", { className: "move-picker" }, /* @__PURE__ */ React.createElement("div", { className: "move-picker-head" }, /* @__PURE__ */ React.createElement("span", { className: "mono" }, "CHOOSE A SLOT"), /* @__PURE__ */ React.createElement("button", { className: "move-cancel", onClick: () => setPicking(false) }, "CANCEL")), moveTargets.map((t) => /* @__PURE__ */ React.createElement("button", { key: t.slot, className: "move-option", onClick: () => {
+  } }, "DRAFT ", p.name.split(" ").slice(-1)[0].toUpperCase()), moveTargets && moveTargets.length > 0 && !picking && React.createElement("button", { className: "move-btn", onClick: () => setPicking(true) }, React.createElement("span", { className: "move-btn-icon" }, "\u21C5"), moveLabel), picking && React.createElement("div", { className: "move-picker" }, React.createElement("div", { className: "move-picker-head" }, React.createElement("span", { className: "mono" }, "CHOOSE A SLOT"), React.createElement("button", { className: "move-cancel", onClick: () => setPicking(false) }, "CANCEL")), moveTargets.map((t) => React.createElement("button", { key: t.slot, className: "move-option", onClick: () => {
     setPicking(false);
     onClose();
     onMove(p.id, t.slot);
-  } }, /* @__PURE__ */ React.createElement("span", { className: "move-option-slot mono" }, t.label), t.player ? /* @__PURE__ */ React.createElement("span", { className: "move-option-body" }, /* @__PURE__ */ React.createElement("span", { className: "move-option-name" }, t.player.name), /* @__PURE__ */ React.createElement("span", { className: "move-option-sub" }, t.player.pos, t.player.posRank, " \xB7 ", Math.round(playerPoints(t.player)), " proj")) : /* @__PURE__ */ React.createElement("span", { className: "move-option-body" }, /* @__PURE__ */ React.createElement("span", { className: "move-option-empty" }, "empty \u2014 no swap needed")), /* @__PURE__ */ React.createElement("span", { className: "move-option-arrow" }, "\u2192"))))));
+  } }, React.createElement("span", { className: "move-option-slot mono" }, t.label), t.player ? React.createElement("span", { className: "move-option-body" }, React.createElement("span", { className: "move-option-name" }, t.player.name), React.createElement("span", { className: "move-option-sub" }, t.player.pos, t.player.posRank, " \xB7 ", Math.round(playerPoints(t.player)), " proj")) : React.createElement("span", { className: "move-option-body" }, React.createElement("span", { className: "move-option-empty" }, "empty \u2014 no swap needed")), React.createElement("span", { className: "move-option-arrow" }, "\u2192"))))));
 }
 function LastPickStrip({ picks, teams, canUndo, onUndo, undoCount }) {
   if (picks.length === 0) return null;
@@ -4561,14 +4780,14 @@ function LastPickStrip({ picks, teams, canUndo, onUndo, undoCount }) {
   let tag = null;
   if (delta >= 12) tag = { label: `STEAL +${Math.round(delta)}`, cls: "tag-steal" };
   else if (delta <= -12) tag = { label: `REACH ${Math.round(delta)}`, cls: "tag-reach" };
-  return /* @__PURE__ */ React.createElement("div", { className: "last-pick", key: last.pickNumber, style: CHROME_BEZEL_STYLE }, /* @__PURE__ */ React.createElement("span", { className: "last-pick-num mono" }, "PICK ", last.pickNumber), /* @__PURE__ */ React.createElement(PosTag, { pos: last.player.pos }), /* @__PURE__ */ React.createElement("span", { className: "last-pick-name" }, last.player.name, " ", /* @__PURE__ */ React.createElement("span", { className: "pos-rank" }, "(", last.player.pos, last.player.posRank, ")")), /* @__PURE__ */ React.createElement("span", { className: "muted small" }, "\u2192 ", teams[last.teamIndex]?.name), tag && /* @__PURE__ */ React.createElement("span", { className: "pick-tag " + tag.cls }, tag.label), canUndo && /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "last-pick", key: last.pickNumber, style: CHROME_BEZEL_STYLE }, React.createElement("span", { className: "last-pick-num mono" }, "PICK ", last.pickNumber), React.createElement(PosTag, { pos: last.player.pos }), React.createElement("span", { className: "last-pick-name" }, last.player.name, " ", React.createElement("span", { className: "pos-rank" }, "(", last.player.pos, last.player.posRank, ")")), React.createElement("span", { className: "last-pick-team muted small" }, "\u2192 ", teams[last.teamIndex]?.name), tag && React.createElement("span", { className: "pick-tag " + tag.cls }, tag.label), canUndo && React.createElement(
     "button",
     {
       className: "undo-btn mono",
       onClick: onUndo,
-      title: `Rewind ${undoCount} pick${undoCount === 1 ? "" : "s"} to your last selection`
+      title: undoCount === 1 ? "Undo this pick" : `Rewind ${undoCount} picks to your last selection`
     },
-    /* @__PURE__ */ React.createElement("span", { className: "undo-icon" }, "\u21B6"),
+    React.createElement("span", { className: "undo-icon" }, "\u21B6"),
     "UNDO"
   ));
 }
@@ -4670,7 +4889,7 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
     }, 780);
     setTimeout(() => setPulsePos(null), 1750);
   }
-  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(MiniBoard, { picks, teams, userSlot, pickNumber, roomSeats }), /* @__PURE__ */ React.createElement(
+  return React.createElement("div", null, React.createElement(MiniBoard, { picks, teams, userSlot, pickNumber, roomSeats }), React.createElement(
     "input",
     {
       className: "text-input search",
@@ -4678,9 +4897,9 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
       value: search,
       onChange: (e) => setSearch(e.target.value)
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "filter-row" }, FILTERS.map((f) => {
+  ), React.createElement("div", { className: "filter-row" }, FILTERS.map((f) => {
     const fc = filterFillCount(f, team);
-    return /* @__PURE__ */ React.createElement(
+    return React.createElement(
       "button",
       {
         key: f,
@@ -4689,9 +4908,9 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
         style: { ...chipStyle(f, filter === f), borderRadius: 9 }
       },
       f,
-      fc && /* @__PURE__ */ React.createElement("span", { className: "filter-chip-count" }, " ", fc.filled, "/", fc.total)
+      fc && React.createElement("span", { className: "filter-chip-count" }, " ", fc.filled, "/", fc.total)
     );
-  })), /* @__PURE__ */ React.createElement("div", { className: "sort-bar" }, /* @__PURE__ */ React.createElement("span", { className: "sort-label mono" }, "FILTERS:"), /* @__PURE__ */ React.createElement("div", { className: "sort-select-wrap" }, /* @__PURE__ */ React.createElement("select", { className: "sort-select", value: sortBy, onChange: (e) => setSortBy(e.target.value) }, SORT_OPTIONS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o.key, value: o.key }, o.label))), /* @__PURE__ */ React.createElement("span", { className: "sort-caret" }, "\u25BE")), /* @__PURE__ */ React.createElement(
+  })), React.createElement("div", { className: "sort-bar" }, React.createElement("span", { className: "sort-label mono" }, "FILTERS:"), React.createElement("div", { className: "sort-select-wrap" }, React.createElement("select", { className: "sort-select", value: sortBy, onChange: (e) => setSortBy(e.target.value) }, SORT_OPTIONS.map((o) => React.createElement("option", { key: o.key, value: o.key }, o.label))), React.createElement("span", { className: "sort-caret" }, "\u25BE")), React.createElement(
     "button",
     {
       className: "gods-btn" + (godsEye ? " gods-on" : "") + (godsIgniting ? " gods-igniting" : ""),
@@ -4699,43 +4918,43 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
       "aria-pressed": godsEye,
       "aria-label": "God's Eye"
     },
-    godsEye ? /* @__PURE__ */ React.createElement(
+    godsEye ? React.createElement(
       "span",
       { className: "gods-orbit", "aria-hidden": "true" },
-      Array.from({ length: 8 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: i }))
+      Array.from({ length: 8 }, (_, i) => React.createElement("i", { key: i }))
     ) : null,
-    /* @__PURE__ */ React.createElement(
+    React.createElement(
       "svg",
       { viewBox: "0 0 26 16", width: "22", height: "15", "aria-hidden": "true" },
-      godsEye ? /* @__PURE__ */ React.createElement(
+      godsEye ? React.createElement(
         "g",
         null,
-        /* @__PURE__ */ React.createElement("path", { d: "M1 8s4.6-6.4 12-6.4S25 8 25 8s-4.6 6.4-12 6.4S1 8 1 8z", fill: "none", stroke: "currentColor", strokeWidth: "1.6" }),
-        /* @__PURE__ */ React.createElement("circle", { cx: "13", cy: "8", r: "3.5", fill: "currentColor" }),
-        /* @__PURE__ */ React.createElement("circle", { cx: "13", cy: "8", r: "1.4", fill: "#1a1204" })
-      ) : /* @__PURE__ */ React.createElement("path", { d: "M1.5 8.5s5 4.6 11.5 4.6S24.5 8.5 24.5 8.5", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round" })
+        React.createElement("path", { d: "M1 8s4.6-6.4 12-6.4S25 8 25 8s-4.6 6.4-12 6.4S1 8 1 8z", fill: "none", stroke: "currentColor", strokeWidth: "1.6" }),
+        React.createElement("circle", { cx: "13", cy: "8", r: "3.5", fill: "currentColor" }),
+        React.createElement("circle", { cx: "13", cy: "8", r: "1.4", fill: "#1a1204" })
+      ) : React.createElement("path", { d: "M1.5 8.5s5 4.6 11.5 4.6S24.5 8.5 24.5 8.5", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round" })
     )
-  ), /* @__PURE__ */ React.createElement(
+  ), React.createElement(
     "button",
     {
       className: "copilot-btn" + (copilot ? " copilot-on" : "") + (copilotIgniting ? " copilot-igniting" : ""),
       onClick: onToggleCopilot,
       "aria-pressed": copilot
     },
-    copilot && /* @__PURE__ */ React.createElement("span", { className: "copilot-orbit", "aria-hidden": "true" }, Array.from({ length: 16 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: i }))),
-    copilotIgniting && /* @__PURE__ */ React.createElement("span", { className: "copilot-burst", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("i", null), /* @__PURE__ */ React.createElement("i", null), /* @__PURE__ */ React.createElement("i", null), /* @__PURE__ */ React.createElement("i", null)),
-    /* @__PURE__ */ React.createElement("span", { className: "copilot-dot" }),
-    /* @__PURE__ */ React.createElement("span", { className: "copilot-label mono" }, "COPILOT")
-  )), oddsInfo && /* @__PURE__ */ React.createElement(
+    copilot && React.createElement("span", { className: "copilot-orbit", "aria-hidden": "true" }, Array.from({ length: 16 }, (_, i) => React.createElement("i", { key: i }))),
+    copilotIgniting && React.createElement("span", { className: "copilot-burst", "aria-hidden": "true" }, React.createElement("i", null), React.createElement("i", null), React.createElement("i", null), React.createElement("i", null)),
+    React.createElement("span", { className: "copilot-dot" }),
+    React.createElement("span", { className: "copilot-label mono" }, "COPILOT")
+  )), oddsInfo && React.createElement(
     "div",
     { className: "odds-backdrop", onClick: () => setOddsInfo(null) },
-    /* @__PURE__ */ React.createElement(
+    React.createElement(
       "div",
       { className: "odds-card", onClick: (e) => e.stopPropagation() },
-      /* @__PURE__ */ React.createElement("div", { className: "odds-eyebrow mono" }, "GOD'S EYE"),
-      /* @__PURE__ */ React.createElement("div", { className: "odds-pct mono" }, oddsInfo.pct, "%"),
-      /* @__PURE__ */ React.createElement("div", { className: "odds-name" }, oddsInfo.player.name),
-      /* @__PURE__ */ React.createElement(
+      React.createElement("div", { className: "odds-eyebrow mono" }, "GOD'S EYE"),
+      React.createElement("div", { className: "odds-pct mono" }, oddsInfo.pct, "%"),
+      React.createElement("div", { className: "odds-name" }, oddsInfo.player.name),
+      React.createElement(
         "div",
         { className: "odds-body" },
         "Based on advanced simulations of the picks between now and your next turn, ",
@@ -4744,17 +4963,17 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
         oddsInfo.pct,
         "% of the time."
       ),
-      /* @__PURE__ */ React.createElement(
+      React.createElement(
         "div",
         { className: "odds-note" },
         oddsInfo.pct >= 70 ? "Comfortable wait \u2014 he will very likely still be here." : oddsInfo.pct >= 40 ? "A real gamble \u2014 roughly a coin flip." : "Take him now if you want him."
       ),
-      /* @__PURE__ */ React.createElement("button", { className: "odds-close", onClick: () => setOddsInfo(null) }, "GOT IT")
+      React.createElement("button", { className: "odds-close", onClick: () => setOddsInfo(null) }, "GOT IT")
     )
-  ), byeInfo && /* @__PURE__ */ React.createElement("div", { className: "bye-pop-backdrop", onClick: () => setByeInfo(null) }, /* @__PURE__ */ React.createElement("div", { className: "bye-pop" + (byeInfo.byeRed ? "" : " bye-pop-caution"), onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "bye-pop-head" }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-week mono" + (byeInfo.byeRed ? "" : " bye-pop-week-caution") }, "WEEK ", byeInfo.bye, " BYE"), /* @__PURE__ */ React.createElement("button", { className: "bye-pop-close", onClick: () => setByeInfo(null) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "bye-pop-lead" }, "Drafting ", /* @__PURE__ */ React.createElement("b", null, byeInfo.player.name), " would put", " ", byeInfo.samePos.length > 0 ? /* @__PURE__ */ React.createElement(React.Fragment, null, "another ", /* @__PURE__ */ React.createElement("b", null, byeInfo.player.pos), " on your Week ", byeInfo.bye, " bye.") : /* @__PURE__ */ React.createElement(React.Fragment, null, "a ", byeInfo.mates.length + 1, "th starter on your Week ", byeInfo.bye, " bye.")), /* @__PURE__ */ React.createElement("div", { className: "bye-pop-label mono" }, "ALREADY OUT THAT WEEK"), byeInfo.mates.map((m, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "bye-pop-row" + (m.pos === byeInfo.player.pos ? " bye-pop-row-hot" : "") }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[m.slot] || m.slot), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-name" }, m.name), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-meta" }, m.pos, m.posRank, " \xB7 ", m.team))), byeInfo.stillAvailable && byeInfo.stillAvailable.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "bye-pop-label mono bye-pop-label-ok" }, "STILL AVAILABLE THAT WEEK"), byeInfo.stillAvailable.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "bye-pop-row bye-pop-row-ok" }, /* @__PURE__ */ React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[s.slot] || s.slot), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-name" }, s.name), /* @__PURE__ */ React.createElement("span", { className: "bye-pop-meta" }, s.pos, s.posRank, " \xB7 Bye ", s.bye)))), !byeInfo.byeRed ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "Just one other starter is out that week, at a different position. Worth noting, not a problem yet.") : byeInfo.noneLeft ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn" }, "You would have no ", byeInfo.player.pos, " to start in Week ", byeInfo.bye, ".") : byeInfo.samePos.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "You would still have ", byeInfo.stillAvailable.length, " ", byeInfo.player.pos, " available in Week ", byeInfo.bye, " \u2014 thinner, but covered.") : null)), analysis && /* @__PURE__ */ React.createElement("div", { className: "cop-backdrop", onClick: () => setAnalysis(null) }, /* @__PURE__ */ React.createElement("div", { className: "cop-sheet", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "cop-head" }, /* @__PURE__ */ React.createElement("span", { className: "cop-badge mono" }, "COPILOT ANALYSIS"), /* @__PURE__ */ React.createElement("button", { className: "cop-close", onClick: () => setAnalysis(null) }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "cop-pick" }, /* @__PURE__ */ React.createElement(PosTag, { pos: analysis.player.pos }), /* @__PURE__ */ React.createElement("div", { className: "cop-pick-body" }, /* @__PURE__ */ React.createElement("div", { className: "cop-pick-name" }, analysis.player.name), /* @__PURE__ */ React.createElement("div", { className: "cop-pick-sub" }, analysis.player.pos, analysis.player.posRank, " \xB7 ", analysis.player.team, BYE_WEEKS[analysis.player.team] ? ` \xB7 Bye ${BYE_WEEKS[analysis.player.team]}` : "")), /* @__PURE__ */ React.createElement("div", { className: "cop-conf" }, /* @__PURE__ */ React.createElement("div", { className: "cop-conf-val" }, analysis.margin >= 25 ? "STRONG" : analysis.margin >= 10 ? "CLEAR" : "NARROW"), /* @__PURE__ */ React.createElement("div", { className: "cop-conf-label mono" }, "EDGE"))), /* @__PURE__ */ React.createElement("div", { className: "cop-verdict" }, "Best value on the board once your roster, positional scarcity and draft timing are accounted for.", analysis.nextPick ? ` Your next pick is #${analysis.nextPick}.` : ""), /* @__PURE__ */ React.createElement("div", { className: "cop-label mono" }, "WHY HIM"), analysis.factors.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).map((f, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "cop-factor " + (f.delta >= 0 ? "cop-factor-plus" : "cop-factor-minus") }, /* @__PURE__ */ React.createElement("span", { className: "cop-factor-bar" }), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-body" }, /* @__PURE__ */ React.createElement("span", { className: "cop-factor-label" }, f.label), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-detail" }, f.detail)), /* @__PURE__ */ React.createElement("span", { className: "cop-factor-delta mono" }, f.delta >= 0 ? "+" : "", Math.round(f.delta)))), analysis.runnersUp.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "cop-label mono" }, "ALSO CONSIDERED"), analysis.runnersUp.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "cop-alt" }, /* @__PURE__ */ React.createElement("span", { className: "cop-alt-name" }, r.player.name), /* @__PURE__ */ React.createElement("span", { className: "cop-alt-meta" }, r.player.pos, r.player.posRank, " \xB7 ", Math.round(playerPoints(r.player)), " proj"), /* @__PURE__ */ React.createElement("span", { className: "cop-alt-gap mono" }, "\u2212", Math.round(analysis.score - r.score))))), /* @__PURE__ */ React.createElement("button", { className: "cop-draft draft-btn", onClick: () => {
+  ), byeInfo && React.createElement("div", { className: "bye-pop-backdrop", onClick: () => setByeInfo(null) }, React.createElement("div", { className: "bye-pop" + (byeInfo.byeRed ? "" : " bye-pop-caution"), onClick: (e) => e.stopPropagation() }, React.createElement("div", { className: "bye-pop-head" }, React.createElement("span", { className: "bye-pop-week mono" + (byeInfo.byeRed ? "" : " bye-pop-week-caution") }, "WEEK ", byeInfo.bye, " BYE"), React.createElement("button", { className: "bye-pop-close", onClick: () => setByeInfo(null) }, "\u2715")), React.createElement("div", { className: "bye-pop-lead" }, "Drafting ", React.createElement("b", null, byeInfo.player.name), " would put", " ", byeInfo.samePos.length > 0 ? React.createElement(React.Fragment, null, "another ", React.createElement("b", null, byeInfo.player.pos), " on your Week ", byeInfo.bye, " bye.") : React.createElement(React.Fragment, null, "a ", byeInfo.mates.length + 1, "th starter on your Week ", byeInfo.bye, " bye.")), React.createElement("div", { className: "bye-pop-label mono" }, "ALREADY OUT THAT WEEK"), byeInfo.mates.map((m, i) => React.createElement("div", { key: i, className: "bye-pop-row" + (m.pos === byeInfo.player.pos ? " bye-pop-row-hot" : "") }, React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[m.slot] || m.slot), React.createElement("span", { className: "bye-pop-name" }, m.name), React.createElement("span", { className: "bye-pop-meta" }, m.pos, m.posRank, " \xB7 ", m.team))), byeInfo.stillAvailable && byeInfo.stillAvailable.length > 0 && React.createElement(React.Fragment, null, React.createElement("div", { className: "bye-pop-label mono bye-pop-label-ok" }, "STILL AVAILABLE THAT WEEK"), byeInfo.stillAvailable.map((s, i) => React.createElement("div", { key: i, className: "bye-pop-row bye-pop-row-ok" }, React.createElement("span", { className: "bye-pop-slot mono" }, SLOT_TAG[s.slot] || s.slot), React.createElement("span", { className: "bye-pop-name" }, s.name), React.createElement("span", { className: "bye-pop-meta" }, s.pos, s.posRank, " \xB7 Bye ", s.bye)))), !byeInfo.byeRed ? React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "Just one other starter is out that week, at a different position. Worth noting, not a problem yet.") : byeInfo.noneLeft ? React.createElement("div", { className: "bye-pop-warn" }, "You would have no ", byeInfo.player.pos, " to start in Week ", byeInfo.bye, ".") : byeInfo.samePos.length > 0 ? React.createElement("div", { className: "bye-pop-warn bye-pop-warn-soft" }, "You would still have ", byeInfo.stillAvailable.length, " ", byeInfo.player.pos, " available in Week ", byeInfo.bye, " \u2014 thinner, but covered.") : null)), analysis && React.createElement("div", { className: "cop-backdrop", onClick: () => setAnalysis(null) }, React.createElement("div", { className: "cop-sheet", onClick: (e) => e.stopPropagation() }, React.createElement("div", { className: "cop-head" }, React.createElement("span", { className: "cop-badge mono" }, "COPILOT ANALYSIS"), React.createElement("button", { className: "cop-close", onClick: () => setAnalysis(null) }, "\u2715")), React.createElement("div", { className: "cop-pick" }, React.createElement(PosTag, { pos: analysis.player.pos }), React.createElement("div", { className: "cop-pick-body" }, React.createElement("div", { className: "cop-pick-name" }, analysis.player.name), React.createElement("div", { className: "cop-pick-sub" }, analysis.player.pos, analysis.player.posRank, " \xB7 ", analysis.player.team, BYE_WEEKS[analysis.player.team] ? ` \xB7 Bye ${BYE_WEEKS[analysis.player.team]}` : "")), React.createElement("div", { className: "cop-conf" }, React.createElement("div", { className: "cop-conf-val" }, analysis.margin >= 25 ? "STRONG" : analysis.margin >= 10 ? "CLEAR" : "NARROW"), React.createElement("div", { className: "cop-conf-label mono" }, "EDGE"))), React.createElement("div", { className: "cop-verdict" }, "Best value on the board once your roster, positional scarcity and draft timing are accounted for.", analysis.nextPick ? ` Your next pick is #${analysis.nextPick}.` : ""), React.createElement("div", { className: "cop-label mono" }, "WHY HIM"), analysis.factors.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).map((f, i) => React.createElement("div", { key: i, className: "cop-factor " + (f.delta >= 0 ? "cop-factor-plus" : "cop-factor-minus") }, React.createElement("span", { className: "cop-factor-bar" }), React.createElement("span", { className: "cop-factor-body" }, React.createElement("span", { className: "cop-factor-label" }, f.label), React.createElement("span", { className: "cop-factor-detail" }, f.detail)), React.createElement("span", { className: "cop-factor-delta mono" }, f.delta >= 0 ? "+" : "", Math.round(f.delta)))), analysis.runnersUp.length > 0 && React.createElement(React.Fragment, null, React.createElement("div", { className: "cop-label mono" }, "ALSO CONSIDERED"), analysis.runnersUp.map((r, i) => React.createElement("div", { key: i, className: "cop-alt" }, React.createElement("span", { className: "cop-alt-name" }, r.player.name), React.createElement("span", { className: "cop-alt-meta" }, r.player.pos, r.player.posRank, " \xB7 ", Math.round(playerPoints(r.player)), " proj"), React.createElement("span", { className: "cop-alt-gap mono" }, "\u2212", Math.round(analysis.score - r.score))))), React.createElement("button", { className: "cop-draft draft-btn", onClick: () => {
     setAnalysis(null);
     handleDraft(analysis.player);
-  } }, "DRAFT ", analysis.player.name.split(" ").slice(-1)[0].toUpperCase()), /* @__PURE__ */ React.createElement("div", { className: "cop-disclaimer" }, "Copilot weighs projections, scarcity, your roster and draft timing. It can't see injuries, news, or your own read on a player."))), /* @__PURE__ */ React.createElement(
+  } }, "DRAFT ", analysis.player.name.split(" ").slice(-1)[0].toUpperCase()), React.createElement("div", { className: "cop-disclaimer" }, "Copilot weighs projections, scarcity, your roster and draft timing. It can't see injuries, news, or your own read on a player."))), React.createElement(
     PlayerSheet,
     {
       player: sheetPlayer,
@@ -4763,7 +4982,7 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
       onDraft: handleDraft,
       onClose: () => setSheetPlayer(null)
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "player-list" }, displayPlayers.map((p) => {
+  ), React.createElement("div", { className: "player-list" }, displayPlayers.map((p) => {
     const bye = BYE_WEEKS[p.team];
     const byeMates = bye ? userStarterByes[bye] || [] : [];
     const posStarters = userStartersByPos[p.pos] || [];
@@ -4773,7 +4992,7 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
     const byeRed = samePos.length > 0 || byeMates.length >= 2;
     const byeYellow = !byeRed && byeMates.length === 1;
     const collides = byeRed || byeYellow;
-    return /* @__PURE__ */ React.createElement(
+    return React.createElement(
       "div",
       {
         key: p.id,
@@ -4787,8 +5006,8 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
           "--fx": POS_SOLID[p.pos] || "#8B9296"
         }
       },
-      fxId === p.id && /* @__PURE__ */ React.createElement("span", { className: "draft-fx", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-tl" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-tr" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-bl" }), /* @__PURE__ */ React.createElement("i", { className: "fx-spark fx-br" })),
-      /* @__PURE__ */ React.createElement("div", { className: "player-info" }, /* @__PURE__ */ React.createElement("div", { className: "player-title" }, p.name, godsEye && availability && availability.get(p.id) != null && /* @__PURE__ */ React.createElement(
+      fxId === p.id && React.createElement("span", { className: "draft-fx", "aria-hidden": "true" }, React.createElement("i", { className: "fx-spark fx-tl" }), React.createElement("i", { className: "fx-spark fx-tr" }), React.createElement("i", { className: "fx-spark fx-bl" }), React.createElement("i", { className: "fx-spark fx-br" })),
+      React.createElement("div", { className: "player-info" }, React.createElement("div", { className: "player-title" }, p.name, godsEye && availability && availability.get(p.id) != null && React.createElement(
         "button",
         {
           className: "gods-badge" + (godsIgniting ? " gods-badge-ign" : ""),
@@ -4798,13 +5017,13 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
           },
           "aria-label": "Availability odds"
         },
-        /* @__PURE__ */ React.createElement(
+        React.createElement(
           "span",
           { className: "gods-badge-orbit", "aria-hidden": "true" },
-          Array.from({ length: 10 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: i }))
+          Array.from({ length: 10 }, (_, i) => React.createElement("i", { key: i }))
         ),
-        /* @__PURE__ */ React.createElement("span", { className: "gods-badge-num mono" }, Math.round(availability.get(p.id) * 100), "%")
-      ), recommendation && recommendation.player.id === p.id && /* @__PURE__ */ React.createElement(
+        React.createElement("span", { className: "gods-badge-num mono" }, Math.round(availability.get(p.id) * 100), "%")
+      ), recommendation && recommendation.player.id === p.id && React.createElement(
         "button",
         {
           className: "cop-star",
@@ -4814,9 +5033,9 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
           },
           "aria-label": "Copilot pick \u2014 see analysis"
         },
-        /* @__PURE__ */ React.createElement("span", { className: "cop-star-orbit", "aria-hidden": "true" }, Array.from({ length: 16 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: i }))),
-        /* @__PURE__ */ React.createElement("span", { className: "cop-star-glyph" }, "\u2605")
-      )), /* @__PURE__ */ React.createElement("div", { className: "player-meta-row" }, /* @__PURE__ */ React.createElement(
+        React.createElement("span", { className: "cop-star-orbit", "aria-hidden": "true" }, Array.from({ length: 16 }, (_, i) => React.createElement("i", { key: i }))),
+        React.createElement("span", { className: "cop-star-glyph" }, "\u2605")
+      )), React.createElement("div", { className: "player-meta-row" }, React.createElement(
         "span",
         {
           className: "pos-tag",
@@ -4829,7 +5048,7 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
         },
         p.pos,
         p.posRank
-      ), /* @__PURE__ */ React.createElement("span", { className: "player-team-bye-text" }, p.team, bye ? /* @__PURE__ */ React.createElement(React.Fragment, null, " (", collides ? /* @__PURE__ */ React.createElement(
+      ), React.createElement("span", { className: "player-team-bye-text" }, p.team, bye ? React.createElement(React.Fragment, null, " (", collides ? React.createElement(
         "span",
         {
           className: "bye-clash " + (byeRed ? "bye-warn" : "bye-caution") + (noneLeft ? " bye-clash-pos" : ""),
@@ -4840,8 +5059,8 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
         },
         "Bye ",
         bye
-      ) : /* @__PURE__ */ React.createElement("span", null, "Bye ", bye), ")") : "")), /* @__PURE__ */ React.createElement("div", { className: "player-stat-row" }, /* @__PURE__ */ React.createElement("span", { className: "stat-pill rank-pill" }, "RANK ", p.rank), /* @__PURE__ */ React.createElement("span", { className: "stat-pill " + adpValueClass(pickNumber, p.adp) }, p.adpEstimated ? "~" : "", "ADP ", p.adp), /* @__PURE__ */ React.createElement("span", { className: "stat-pill vorp-pill" }, formatVorp(playerVOR(p)), " VORP"), /* @__PURE__ */ React.createElement("span", { className: "stat-pill proj-pill" }, Math.round(playerPoints(p)), " PROJ"))),
-      isUserTurn && /* @__PURE__ */ React.createElement(
+      ) : React.createElement("span", null, "Bye ", bye), ")") : "")), React.createElement("div", { className: "player-stat-row" }, React.createElement("span", { className: "stat-pill rank-pill" }, "RANK ", p.rank), React.createElement("span", { className: "stat-pill " + adpValueClass(pickNumber, p.adp) }, p.adpEstimated ? "~" : "", "ADP ", p.adp), React.createElement("span", { className: "stat-pill vorp-pill" }, formatVorp(playerVOR(p)), " VORP"), React.createElement("span", { className: "stat-pill proj-pill" }, Math.round(playerPoints(p)), " PROJ"))),
+      isUserTurn && React.createElement(
         "button",
         {
           className: "draft-btn",
@@ -4857,7 +5076,7 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
         "DRAFT"
       )
     );
-  }), players.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "empty-note" }, "No players match that search/filter.")));
+  }), players.length === 0 && React.createElement("div", { className: "empty-note" }, "No players match that search/filter.")));
 }
 function MyTeamTab({ team, draftComplete, onReset, onMovePlayer }) {
   const [sheetPlayer, setSheetPlayer] = useState(null);
@@ -4900,7 +5119,7 @@ function MyTeamTab({ team, draftComplete, onReset, onMovePlayer }) {
       player: team.slots[k]
     }));
   }
-  return /* @__PURE__ */ React.createElement("div", { className: "myteam" }, /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "myteam" }, React.createElement(
     PlayerSheet,
     {
       player: sheetPlayer,
@@ -4912,12 +5131,12 @@ function MyTeamTab({ team, draftComplete, onReset, onMovePlayer }) {
       moveTargets: sheetPlayer ? moveTargetsFor(sheetPlayer) : null,
       onClose: () => setSheetPlayer(null)
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "team-hero", style: GLASS_CARD_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "team-hero-top" }, /* @__PURE__ */ React.createElement("div", { className: "team-name" }, team.name), /* @__PURE__ */ React.createElement("div", { className: "team-fill mono" }, filled, "/", SLOT_ORDER.length)), /* @__PURE__ */ React.createElement("div", { className: "roster-progress-track" }, /* @__PURE__ */ React.createElement("div", { className: "roster-progress-fill", style: { width: `${pct}%` } })), /* @__PURE__ */ React.createElement("div", { className: "team-metrics" }, /* @__PURE__ */ React.createElement("div", { className: "team-metric" }, /* @__PURE__ */ React.createElement("div", { className: "team-metric-value" }, Math.round(startingPts)), /* @__PURE__ */ React.createElement("div", { className: "team-metric-label mono" }, "STARTER PROJ")), /* @__PURE__ */ React.createElement("div", { className: "team-metric-div" }), /* @__PURE__ */ React.createElement("div", { className: "team-metric" }, /* @__PURE__ */ React.createElement("div", { className: "team-metric-value team-metric-dim" }, Math.round(benchPts)), /* @__PURE__ */ React.createElement("div", { className: "team-metric-label mono" }, "BENCH PROJ")), /* @__PURE__ */ React.createElement("div", { className: "team-metric-div" }), /* @__PURE__ */ React.createElement("div", { className: "team-metric" }, /* @__PURE__ */ React.createElement("div", { className: "team-metric-value " + (valueDelta >= 0 ? "delta-good" : "delta-bad") }, valueDelta >= 0 ? "+" : "", valueDelta.toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "team-metric-label mono" }, "VS ADP"))), /* @__PURE__ */ React.createElement("div", { className: "team-metric-caption" }, "Projected fantasy points \xB7 standard scoring")), drafted.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "pos-strip" }, POS_ORDER.map((pos) => /* @__PURE__ */ React.createElement("div", { key: pos, className: "pos-count" + (posCounts[pos] ? "" : " pos-count-zero") }, /* @__PURE__ */ React.createElement("span", { className: "pos-count-dot", style: { background: POS_SOLID[pos] } }), /* @__PURE__ */ React.createElement("span", { className: "pos-count-pos mono" }, pos), /* @__PURE__ */ React.createElement("span", { className: "pos-count-n" }, posCounts[pos] || 0)))), byeRisks.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bye-alert" }, byeRisks.map(([wk, list]) => /* @__PURE__ */ React.createElement("div", { key: wk, className: "bye-alert-row" }, /* @__PURE__ */ React.createElement("span", { className: "note-dot note-dot-bad" }), /* @__PURE__ */ React.createElement("b", null, "Week ", wk), " \u2014 ", list.length, " starters on bye", /* @__PURE__ */ React.createElement("span", { className: "bye-alert-names" }, list.map((p) => p.name.split(" ").slice(-1)[0]).join(", "))))), /* @__PURE__ */ React.createElement("div", { className: "roster-section-label mono" }, "STARTING LINEUP"), /* @__PURE__ */ React.createElement("div", { className: "roster-grid" }, SLOT_ORDER.map((slot) => {
+  ), React.createElement("div", { className: "team-hero", style: GLASS_CARD_STYLE }, React.createElement("div", { className: "team-hero-top" }, React.createElement("div", { className: "team-name" }, team.name), React.createElement("div", { className: "team-fill mono" }, filled, "/", SLOT_ORDER.length)), React.createElement("div", { className: "roster-progress-track" }, React.createElement("div", { className: "roster-progress-fill", style: { width: `${pct}%` } })), React.createElement("div", { className: "team-metrics" }, React.createElement("div", { className: "team-metric" }, React.createElement("div", { className: "team-metric-value" }, Math.round(startingPts)), React.createElement("div", { className: "team-metric-label mono" }, "STARTER PROJ")), React.createElement("div", { className: "team-metric-div" }), React.createElement("div", { className: "team-metric" }, React.createElement("div", { className: "team-metric-value team-metric-dim" }, Math.round(benchPts)), React.createElement("div", { className: "team-metric-label mono" }, "BENCH PROJ")), React.createElement("div", { className: "team-metric-div" }), React.createElement("div", { className: "team-metric" }, React.createElement("div", { className: "team-metric-value " + (valueDelta >= 0 ? "delta-good" : "delta-bad") }, valueDelta >= 0 ? "+" : "", valueDelta.toFixed(1)), React.createElement("div", { className: "team-metric-label mono" }, "VS ADP"))), React.createElement("div", { className: "team-metric-caption" }, "Projected fantasy points \xB7 standard scoring")), drafted.length > 0 && React.createElement("div", { className: "pos-strip" }, POS_ORDER.map((pos) => React.createElement("div", { key: pos, className: "pos-count" + (posCounts[pos] ? "" : " pos-count-zero") }, React.createElement("span", { className: "pos-count-dot", style: { background: POS_SOLID[pos] } }), React.createElement("span", { className: "pos-count-pos mono" }, pos), React.createElement("span", { className: "pos-count-n" }, posCounts[pos] || 0)))), byeRisks.length > 0 && React.createElement("div", { className: "bye-alert" }, byeRisks.map(([wk, list]) => React.createElement("div", { key: wk, className: "bye-alert-row" }, React.createElement("span", { className: "note-dot note-dot-bad" }), React.createElement("b", null, "Week ", wk), " \u2014 ", list.length, " starters on bye", React.createElement("span", { className: "bye-alert-names" }, list.map((p) => p.name.split(" ").slice(-1)[0]).join(", "))))), React.createElement("div", { className: "roster-section-label mono" }, "STARTING LINEUP"), React.createElement("div", { className: "roster-grid" }, SLOT_ORDER.map((slot) => {
     const p = team.slots[slot];
     const isStarter = STARTER_SET.has(slot);
     const bye = p && BYE_WEEKS[p.team];
     const collides = bye ? (starterByes[bye] || []).length >= 2 : false;
-    const row = /* @__PURE__ */ React.createElement(
+    const row = React.createElement(
       "div",
       {
         key: slot,
@@ -4925,7 +5144,7 @@ function MyTeamTab({ team, draftComplete, onReset, onMovePlayer }) {
         className: "roster-slot" + (isStarter ? " roster-slot-starter" : " roster-slot-bench") + (p ? " roster-slot-tappable" : ""),
         style: { ...GLASS_ROW_STYLE, borderLeft: p ? `2px solid ${POS_SOLID[p.pos] || "#8B9296"}66` : "2px solid rgba(241,237,225,0.06)" }
       },
-      /* @__PURE__ */ React.createElement(
+      React.createElement(
         "div",
         {
           className: "roster-slot-label mono" + (p ? "" : " roster-slot-label-empty"),
@@ -4933,13 +5152,13 @@ function MyTeamTab({ team, draftComplete, onReset, onMovePlayer }) {
         },
         p && slot.startsWith("BN") ? p.pos : SLOT_TAG[slot]
       ),
-      p ? /* @__PURE__ */ React.createElement("div", { className: "roster-slot-body" }, /* @__PURE__ */ React.createElement("div", { className: "roster-line1" }, /* @__PURE__ */ React.createElement("span", { className: "roster-name" }, p.name), /* @__PURE__ */ React.createElement("span", { className: "roster-pts mono" }, Math.round(playerPoints(p)), /* @__PURE__ */ React.createElement("span", { className: "roster-pts-unit" }, " PROJ"))), /* @__PURE__ */ React.createElement("div", { className: "roster-line2" }, /* @__PURE__ */ React.createElement("span", { className: "roster-meta" }, p.pos, p.posRank, " \xB7 ", p.team, bye ? /* @__PURE__ */ React.createElement(React.Fragment, null, " \xB7 ", /* @__PURE__ */ React.createElement("span", { className: collides ? "bye-warn" : "" }, "Bye ", bye)) : null))) : /* @__PURE__ */ React.createElement("div", { className: "roster-slot-empty" }, "empty")
+      p ? React.createElement("div", { className: "roster-slot-body" }, React.createElement("div", { className: "roster-line1" }, React.createElement("span", { className: "roster-name" }, p.name), React.createElement("span", { className: "roster-pts mono" }, Math.round(playerPoints(p)), React.createElement("span", { className: "roster-pts-unit" }, " PROJ"))), React.createElement("div", { className: "roster-line2" }, React.createElement("span", { className: "roster-meta" }, p.pos, p.posRank, " \xB7 ", p.team, bye ? React.createElement(React.Fragment, null, " \xB7 ", React.createElement("span", { className: collides ? "bye-warn" : "" }, "Bye ", bye)) : null))) : React.createElement("div", { className: "roster-slot-empty" }, "empty")
     );
     if (slot === "BN1") {
-      return /* @__PURE__ */ React.createElement(React.Fragment, { key: slot }, /* @__PURE__ */ React.createElement("div", { className: "roster-section-label mono roster-section-bench" }, "BENCH"), row);
+      return React.createElement(React.Fragment, { key: slot }, React.createElement("div", { className: "roster-section-label mono roster-section-bench" }, "BENCH"), row);
     }
     return row;
-  })), draftComplete && /* @__PURE__ */ React.createElement("button", { className: "start-btn reset-btn", onClick: onReset }, "START NEW DRAFT"));
+  })), draftComplete && React.createElement("button", { className: "start-btn reset-btn", onClick: onReset }, "START NEW DRAFT"));
 }
 function BoardTab({ teams, picks, userSlot }) {
   const [sheetPlayer, setSheetPlayer] = useState(null);
@@ -4954,13 +5173,13 @@ function BoardTab({ teams, picks, userSlot }) {
     }
     rows.push({ r, cells });
   }
-  return /* @__PURE__ */ React.createElement("div", { className: "board-wrap" }, /* @__PURE__ */ React.createElement(PlayerSheet, { player: sheetPlayer && sheetPlayer.player, draftedAt: sheetPlayer && sheetPlayer.pickNumber, draftedBy: sheetPlayer && sheetPlayer.by, canDraft: false, onDraft: () => {
-  }, onClose: () => setSheetPlayer(null) }), /* @__PURE__ */ React.createElement("div", { className: "board-grid" }, /* @__PURE__ */ React.createElement("div", { className: "board-corner mono muted" }, "RD"), teams.map((tm) => /* @__PURE__ */ React.createElement("div", { key: tm.index, className: "board-head mono" + (tm.isUser ? " board-head-user" : "") }, tm.isUser ? "YOU" : `T${tm.index + 1}`)), rows.map((row) => /* @__PURE__ */ React.createElement(React.Fragment, { key: row.r }, /* @__PURE__ */ React.createElement("div", { className: "board-round mono muted" }, row.r), row.cells.sort((a, b) => a.teamIdxForCell - b.teamIdxForCell).map((c) => /* @__PURE__ */ React.createElement("div", { key: c.teamIdxForCell, className: "board-cell" + (teams[c.teamIdxForCell].isUser ? " board-cell-user" : "") + (c.pick ? " board-cell-tap" : ""), onClick: c.pick ? () => setSheetPlayer({ player: c.pick.player, pickNumber: c.pick.pickNumber, by: teams[c.teamIdxForCell] && teams[c.teamIdxForCell].name }) : void 0 }, c.pick ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "board-pos", style: { color: POS_SOLID[c.pick.player.pos] || "#8B9296" } }, c.pick.player.pos), /* @__PURE__ */ React.createElement("span", { className: "board-name" }, c.pick.player.name.split(" ").slice(-1)[0])) : /* @__PURE__ */ React.createElement("span", { className: "muted" }, "\u2014")))))));
+  return React.createElement("div", { className: "board-wrap" }, React.createElement(PlayerSheet, { player: sheetPlayer && sheetPlayer.player, draftedAt: sheetPlayer && sheetPlayer.pickNumber, draftedBy: sheetPlayer && sheetPlayer.by, canDraft: false, onDraft: () => {
+  }, onClose: () => setSheetPlayer(null) }), React.createElement("div", { className: "board-grid" }, React.createElement("div", { className: "board-corner mono muted" }, "RD"), teams.map((tm) => React.createElement("div", { key: tm.index, className: "board-head mono" + (tm.isUser ? " board-head-user" : "") }, tm.isUser ? "YOU" : `T${tm.index + 1}`)), rows.map((row) => React.createElement(React.Fragment, { key: row.r }, React.createElement("div", { className: "board-round mono muted" }, row.r), row.cells.sort((a, b) => a.teamIdxForCell - b.teamIdxForCell).map((c) => React.createElement("div", { key: c.teamIdxForCell, className: "board-cell" + (teams[c.teamIdxForCell].isUser ? " board-cell-user" : "") + (c.pick ? " board-cell-tap" : ""), onClick: c.pick ? () => setSheetPlayer({ player: c.pick.player, pickNumber: c.pick.pickNumber, by: teams[c.teamIdxForCell] && teams[c.teamIdxForCell].name }) : void 0 }, c.pick ? React.createElement(React.Fragment, null, React.createElement("span", { className: "board-pos", style: { color: POS_SOLID[c.pick.player.pos] || "#8B9296" } }, c.pick.player.pos), React.createElement("span", { className: "board-name" }, c.pick.player.name.split(" ").slice(-1)[0])) : React.createElement("span", { className: "muted" }, "\u2014")))))));
 }
 function GradeRing({ grade, size = 88 }) {
   const pct = GRADE_SCORE[grade] ?? 0;
   const color = gradeColor(grade);
-  return /* @__PURE__ */ React.createElement("div", { className: "grade-ring", style: { width: size, height: size, background: `conic-gradient(${color} ${pct}%, rgba(255,255,255,0.1) ${pct}% 100%)` } }, /* @__PURE__ */ React.createElement("div", { className: "grade-ring-inner", style: { color } }, grade));
+  return React.createElement("div", { className: "grade-ring", style: { width: size, height: size, background: `conic-gradient(${color} ${pct}%, rgba(255,255,255,0.1) ${pct}% 100%)` } }, React.createElement("div", { className: "grade-ring-inner", style: { color } }, grade));
 }
 const RADAR_AXES = [
   { pos: "QB", angle: -90 },
@@ -4976,10 +5195,10 @@ function RadarChart({ scores, grades, color }) {
   };
   const dataPts = RADAR_AXES.map((a) => pt(a.angle, scores[a.pos] ?? 0));
   const dataPath = dataPts.map((p) => p.join(",")).join(" ");
-  return /* @__PURE__ */ React.createElement("div", { className: "radar-wrap" }, /* @__PURE__ */ React.createElement("svg", { viewBox: `0 0 ${size} ${size}`, className: "radar-svg" }, [33, 66, 100].map((lvl) => /* @__PURE__ */ React.createElement("polygon", { key: lvl, points: RADAR_AXES.map((a) => pt(a.angle, lvl).join(",")).join(" "), className: "radar-grid" })), RADAR_AXES.map((a) => {
+  return React.createElement("div", { className: "radar-wrap" }, React.createElement("svg", { viewBox: `0 0 ${size} ${size}`, className: "radar-svg" }, [33, 66, 100].map((lvl) => React.createElement("polygon", { key: lvl, points: RADAR_AXES.map((a) => pt(a.angle, lvl).join(",")).join(" "), className: "radar-grid" })), RADAR_AXES.map((a) => {
     const [x, y] = pt(a.angle, 100);
-    return /* @__PURE__ */ React.createElement("line", { key: a.pos, x1: center, y1: center, x2: x, y2: y, className: "radar-axis" });
-  }), /* @__PURE__ */ React.createElement("polygon", { points: dataPath, fill: color, fillOpacity: "0.28", stroke: color, strokeWidth: "2", strokeLinejoin: "round" }), dataPts.map((p, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: p[0], cy: p[1], r: "3.5", fill: color }))), /* @__PURE__ */ React.createElement("div", { className: "radar-labels" }, RADAR_AXES.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.pos, className: "radar-label radar-label-" + a.pos.toLowerCase() }, /* @__PURE__ */ React.createElement(PosTag, { pos: a.pos }), /* @__PURE__ */ React.createElement("span", { className: "radar-label-grade mono", style: { color: gradeColor(grades[a.pos]) } }, grades[a.pos])))));
+    return React.createElement("line", { key: a.pos, x1: center, y1: center, x2: x, y2: y, className: "radar-axis" });
+  }), React.createElement("polygon", { points: dataPath, fill: color, fillOpacity: "0.28", stroke: color, strokeWidth: "2", strokeLinejoin: "round" }), dataPts.map((p, i) => React.createElement("circle", { key: i, cx: p[0], cy: p[1], r: "3.5", fill: color }))), React.createElement("div", { className: "radar-labels" }, RADAR_AXES.map((a) => React.createElement("div", { key: a.pos, className: "radar-label radar-label-" + a.pos.toLowerCase() }, React.createElement(PosTag, { pos: a.pos }), React.createElement("span", { className: "radar-label-grade mono", style: { color: gradeColor(grades[a.pos]) } }, grades[a.pos])))));
 }
 const SEASON_WEEKS = 18;
 function compositeWeekly(roster) {
@@ -5504,7 +5723,7 @@ function GradeTab({ picks, userSlot, teams }) {
   const userIndex = userSlot - 1;
   const userPicks = picks.filter((p) => p.teamIndex === userIndex);
   if (userPicks.length === 0) {
-    return /* @__PURE__ */ React.createElement("div", { className: "empty-note" }, "Make a few picks to see your draft grade.");
+    return React.createElement("div", { className: "empty-note" }, "Make a few picks to see your draft grade.");
   }
   const r = computeDraftReport(picks, teams, userIndex);
   const vsAvg = r.compositePts - r.compositeAvg;
@@ -5513,7 +5732,7 @@ function GradeTab({ picks, userSlot, teams }) {
     scores[p.pos] = GRADE_SCORE[p.grade] ?? 0;
     grades[p.pos] = p.grade;
   });
-  return /* @__PURE__ */ React.createElement("div", { className: "grade-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "grade-hero", style: GLASS_CARD_STYLE }, /* @__PURE__ */ React.createElement(GradeRing, { grade: r.compositeGrade }), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-body" }, /* @__PURE__ */ React.createElement("div", { className: "grade-hero-label mono" }, "COMPOSITE \xB7 " + ordinal(r.compositeRank) + " of " + NUM_TEAMS), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-value" }, Math.round(r.compositePts), /* @__PURE__ */ React.createElement("span", { className: "grade-hero-unit" }, " pts/week")), /* @__PURE__ */ React.createElement("div", { className: "grade-hero-sub" }, /* @__PURE__ */ React.createElement("span", { className: vsAvg >= 0 ? "delta-good" : "delta-bad" }, vsAvg >= 0 ? "+" : "", Math.round(vsAvg)), /* @__PURE__ */ React.createElement("span", { className: "muted" }, " vs league average (", Math.round(r.compositeAvg), ")")), /* @__PURE__ */ React.createElement("div", { className: "grade-rank-pill" }, ordinal(r.strengthRank), " of ", NUM_TEAMS))), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-card", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-bar-head" }, /* @__PURE__ */ React.createElement("span", { className: "mono small muted" }, "STARTING LINEUP"), /* @__PURE__ */ React.createElement("span", { className: "mono small muted" }, "BEST IN LEAGUE ", Math.round(r.bestPts))), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-track" }, /* @__PURE__ */ React.createElement("div", { className: "grade-bar-fill", style: { width: Math.max(4, Math.min(100, r.strengthPts / (r.bestPts || 1) * 100)) + "%" } }), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-avg", style: { left: Math.min(100, r.leagueAvgPts / (r.bestPts || 1) * 100) + "%" } })), /* @__PURE__ */ React.createElement("div", { className: "grade-bar-foot muted small" }, "Marker shows league average")), /* @__PURE__ */ React.createElement("div", { className: "grade-secondary", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-sec-item" }, /* @__PURE__ */ React.createElement("div", { className: "mono small muted" }, "DRAFT VALUE"), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-value", style: { color: gradeColor(r.valueGrade) } }, r.valueGrade), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, r.valueAvg === null ? "\u2014" : `${r.valueAvg >= 0 ? "+" : ""}${r.valueAvg.toFixed(1)} vs ADP`)), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-divider" }), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-item" }, /* @__PURE__ */ React.createElement("div", { className: "mono small muted" }, "VALUE RANK"), /* @__PURE__ */ React.createElement("div", { className: "grade-sec-value" }, r.valueRank ? ordinal(r.valueRank) : "\u2014"), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "of ", NUM_TEAMS, " teams"))), r.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "grade-alerts" }, r.alerts.map((a, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "grade-alert grade-alert-" + a.level }, /* @__PURE__ */ React.createElement("span", { className: "note-dot " + (a.level === "bad" ? "note-dot-bad" : "note-dot-warn") }), a.text))), /* @__PURE__ */ React.createElement(RadarChart, { scores, grades, color: gradeColor(r.strengthGrade) }), /* @__PURE__ */ React.createElement("div", { className: "grade-positions" }, r.positions.map((g) => /* @__PURE__ */ React.createElement("div", { key: g.pos, className: "grade-row", style: GLASS_ROW_STYLE }, /* @__PURE__ */ React.createElement("div", { className: "grade-row-head" }, /* @__PURE__ */ React.createElement(PosTag, { pos: g.pos }), /* @__PURE__ */ React.createElement("span", { className: "grade-row-badge", style: { color: gradeColor(g.grade) } }, g.grade), /* @__PURE__ */ React.createElement("span", { className: "grade-row-pts mono" }, Math.round(g.pts), " pts"), /* @__PURE__ */ React.createElement("span", { className: "grade-row-rank muted small" }, ordinal(g.rank), " of ", NUM_TEAMS)), g.starters.length > 0 ? /* @__PURE__ */ React.createElement("div", { className: "grade-starters" }, g.starters.map((pl, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "grade-starter-line" }, /* @__PURE__ */ React.createElement("span", { className: "grade-starter-name" }, pl.name), /* @__PURE__ */ React.createElement("span", { className: "grade-starter-pts mono" }, Math.round(playerPoints(pl)))))) : /* @__PURE__ */ React.createElement("div", { className: "grade-row-notes muted small" }, "No starter at this position"), (g.best || g.reach) && /* @__PURE__ */ React.createElement("div", { className: "grade-row-notes" }, g.best && /* @__PURE__ */ React.createElement("div", { className: "grade-note-line" }, /* @__PURE__ */ React.createElement("span", { className: "note-dot note-dot-good" }), "Value: ", g.best.pick.player.name, " \u2014 pick ", g.best.pick.pickNumber, ", ADP ", g.best.pick.player.adp, " (+", g.best.delta, ")"), g.reach && /* @__PURE__ */ React.createElement("div", { className: "grade-note-line" }, /* @__PURE__ */ React.createElement("span", { className: "note-dot note-dot-bad" }), "Reach: ", g.reach.pick.player.name, " \u2014 pick ", g.reach.pick.pickNumber, ", ADP ", g.reach.pick.player.adp, " (", g.reach.delta, ")")), g.count > g.starters.length && /* @__PURE__ */ React.createElement("div", { className: "grade-bench muted small" }, "+", g.count - g.starters.length, " on bench")))));
+  return React.createElement("div", { className: "grade-wrap" }, React.createElement("div", { className: "grade-hero", style: GLASS_CARD_STYLE }, React.createElement(GradeRing, { grade: r.compositeGrade }), React.createElement("div", { className: "grade-hero-body" }, React.createElement("div", { className: "grade-hero-label mono" }, "COMPOSITE \xB7 " + ordinal(r.compositeRank) + " of " + NUM_TEAMS), React.createElement("div", { className: "grade-hero-value" }, Math.round(r.compositePts), React.createElement("span", { className: "grade-hero-unit" }, " pts/week")), React.createElement("div", { className: "grade-hero-sub" }, React.createElement("span", { className: vsAvg >= 0 ? "delta-good" : "delta-bad" }, vsAvg >= 0 ? "+" : "", Math.round(vsAvg)), React.createElement("span", { className: "muted" }, " vs league average (", Math.round(r.compositeAvg), ")")), React.createElement("div", { className: "grade-rank-pill" }, ordinal(r.strengthRank), " of ", NUM_TEAMS))), React.createElement("div", { className: "grade-bar-card", style: GLASS_ROW_STYLE }, React.createElement("div", { className: "grade-bar-head" }, React.createElement("span", { className: "mono small muted" }, "STARTING LINEUP"), React.createElement("span", { className: "mono small muted" }, "BEST IN LEAGUE ", Math.round(r.bestPts))), React.createElement("div", { className: "grade-bar-track" }, React.createElement("div", { className: "grade-bar-fill", style: { width: Math.max(4, Math.min(100, r.strengthPts / (r.bestPts || 1) * 100)) + "%" } }), React.createElement("div", { className: "grade-bar-avg", style: { left: Math.min(100, r.leagueAvgPts / (r.bestPts || 1) * 100) + "%" } })), React.createElement("div", { className: "grade-bar-foot muted small" }, "Marker shows league average")), React.createElement("div", { className: "grade-secondary", style: GLASS_ROW_STYLE }, React.createElement("div", { className: "grade-sec-item" }, React.createElement("div", { className: "mono small muted" }, "DRAFT VALUE"), React.createElement("div", { className: "grade-sec-value", style: { color: gradeColor(r.valueGrade) } }, r.valueGrade), React.createElement("div", { className: "muted small" }, r.valueAvg === null ? "\u2014" : `${r.valueAvg >= 0 ? "+" : ""}${r.valueAvg.toFixed(1)} vs ADP`)), React.createElement("div", { className: "grade-sec-divider" }), React.createElement("div", { className: "grade-sec-item" }, React.createElement("div", { className: "mono small muted" }, "VALUE RANK"), React.createElement("div", { className: "grade-sec-value" }, r.valueRank ? ordinal(r.valueRank) : "\u2014"), React.createElement("div", { className: "muted small" }, "of ", NUM_TEAMS, " teams"))), r.alerts.length > 0 && React.createElement("div", { className: "grade-alerts" }, r.alerts.map((a, i) => React.createElement("div", { key: i, className: "grade-alert grade-alert-" + a.level }, React.createElement("span", { className: "note-dot " + (a.level === "bad" ? "note-dot-bad" : "note-dot-warn") }), a.text))), React.createElement(RadarChart, { scores, grades, color: gradeColor(r.strengthGrade) }), React.createElement("div", { className: "grade-positions" }, r.positions.map((g) => React.createElement("div", { key: g.pos, className: "grade-row", style: GLASS_ROW_STYLE }, React.createElement("div", { className: "grade-row-head" }, React.createElement(PosTag, { pos: g.pos }), React.createElement("span", { className: "grade-row-badge", style: { color: gradeColor(g.grade) } }, g.grade), React.createElement("span", { className: "grade-row-pts mono" }, Math.round(g.pts), " pts"), React.createElement("span", { className: "grade-row-rank muted small" }, ordinal(g.rank), " of ", NUM_TEAMS)), g.starters.length > 0 ? React.createElement("div", { className: "grade-starters" }, g.starters.map((pl, i) => React.createElement("div", { key: i, className: "grade-starter-line" }, React.createElement("span", { className: "grade-starter-name" }, pl.name), React.createElement("span", { className: "grade-starter-pts mono" }, Math.round(playerPoints(pl)))))) : React.createElement("div", { className: "grade-row-notes muted small" }, "No starter at this position"), (g.best || g.reach) && React.createElement("div", { className: "grade-row-notes" }, g.best && React.createElement("div", { className: "grade-note-line" }, React.createElement("span", { className: "note-dot note-dot-good" }), "Value: ", g.best.pick.player.name, " \u2014 pick ", g.best.pick.pickNumber, ", ADP ", g.best.pick.player.adp, " (+", g.best.delta, ")"), g.reach && React.createElement("div", { className: "grade-note-line" }, React.createElement("span", { className: "note-dot note-dot-bad" }), "Reach: ", g.reach.pick.player.name, " \u2014 pick ", g.reach.pick.pickNumber, ", ADP ", g.reach.pick.player.adp, " (", g.reach.delta, ")")), g.count > g.starters.length && React.createElement("div", { className: "grade-bench muted small" }, "+", g.count - g.starters.length, " on bench")))));
 }
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -5672,9 +5891,17 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .dot-pulse { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #E8B33D; margin-right: 6px; animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
 
-.last-pick { display: flex; align-items: center; gap: 8px; background: linear-gradient(rgba(23,36,27,0.75), rgba(23,36,27,0.75)) padding-box, linear-gradient(180deg, #e8e8ea, #9a9a9e 35%, #5a5a5e 60%, #cfcfd2) border-box; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 2px solid transparent; border-radius: 12px; padding: 9px 12px; margin-bottom: 12px; font-size: 12px; flex-wrap: wrap; animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15); }
-.last-pick-num { color: #8FA396; font-size: 11px; letter-spacing: 0.04em; }
-.last-pick-name { font-weight: 600; }
+.last-pick { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow: hidden; background: linear-gradient(rgba(23,36,27,0.75), rgba(23,36,27,0.75)) padding-box, linear-gradient(180deg, #e8e8ea, #9a9a9e 35%, #5a5a5e 60%, #cfcfd2) border-box; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 2px solid transparent; border-radius: 12px; padding: 9px 12px; margin-bottom: 12px; font-size: 12px; animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15); }
+.last-pick-num { color: #8FA396; font-size: 11px; letter-spacing: 0.04em; flex-shrink: 0; }
+.last-pick-name { font-weight: 600; flex: 0 1 auto; min-width: 4ch;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The team name is the most expendable text, so it absorbs the slack and is
+   the first thing to truncate. It also does the job margin-left:auto used to
+   do on the tag \u2014 pushing the verdict tag and UNDO to the right edge. */
+.last-pick-team { flex: 1 1 auto; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.last-pick .pick-tag { margin-left: 0; flex-shrink: 0; }
+.last-pick > .pos-tag { flex-shrink: 0; }
 .pick-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.03em; margin-left: auto; }
 .tag-steal { background: rgba(62,156,107,0.22); color: #6FCB9A; border: 1px solid rgba(111,203,154,0.25); }
 .tag-reach { background: rgba(216,84,47,0.22); color: #F08A63; border: 1px solid rgba(240,138,99,0.25); }
@@ -5991,8 +6218,10 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .pv { margin: 4px 0 16px; padding: 12px 13px; border-radius: 12px; }
 /* The last-pick strip changes height when a steal/reach verdict appears, which
    pushed the whole board up and down between picks. Reserving the taller of the
-   two states keeps the layout still. */
-.last-pick { min-height: 58px; }
+   two states keeps the layout still. Long names used to wrap past this reserve
+   and jump the board anyway, so the strip is now nowrap + ellipsis above and
+   this is a hard height rather than a floor. */
+.last-pick { height: 58px; }
 .human-pick { min-height: 42px; }
 .pv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .pv-tag { font-size: 11.5px; font-weight: 800; letter-spacing: 0.13em; padding: 4px 9px; border-radius: 6px; }
@@ -6321,6 +6550,19 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .resume-glow { position: absolute; top: -60%; left: 50%; transform: translateX(-50%);
   width: 220%; height: 150%; pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(90,225,145,0.16), transparent 62%); }
+.resume-kicker-tool { color: #E8C97A; }
+.gear-exit { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  margin-top: 2px; padding: 12px 13px; border-radius: 11px; cursor: pointer;
+  background: rgba(216,84,47,0.10); border: 1px solid rgba(216,84,47,0.32); color: #F1EDE1; }
+.gear-exit:active { transform: scale(0.985); }
+.gear-exit .noise-title { color: #F0A88C; }
+.gear-reset { background: rgba(232,179,61,0.10); border-color: rgba(232,179,61,0.34); }
+.gear-reset .noise-title { color: #E8C97A; }
+.gear-reset .gear-exit-chev { color: #C9A85E; }
+.tool-bar-live { border-color: rgba(232,179,61,0.55); box-shadow: 0 0 0 1px rgba(232,179,61,0.20), 0 5px 16px rgba(0,0,0,0.34); }
+.tool-bar-live .mp-dot { animation: toolPulse 1.9s ease-in-out infinite; }
+@keyframes toolPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+.gear-exit-chev { margin-left: auto; color: #C4705A; font-size: 17px; line-height: 1; }
 .resume-kicker { position: relative; font-size: 10.5px; font-weight: 800; letter-spacing: 0.2em; color: #8FD6AE; }
 .resume-picks { position: relative; font-family: 'Anton', sans-serif; font-size: 56px; line-height: 1.05;
   color: #EAFFF2; margin: 4px 0 0; text-shadow: 0 0 26px rgba(110,235,165,0.4); }
@@ -6492,6 +6734,40 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .room-ready-cancel { color: #FFEAE4; border: 1.5px solid rgba(255,190,175,0.7);
   background: linear-gradient(180deg, #FF8A72 0%, #E4553A 45%, #A8301B 100%);
   box-shadow: inset 0 2px 3px rgba(255,255,255,0.35), 0 5px 16px rgba(200,70,45,0.45); }
+/* --- Draft Tool --- */
+/* Amber rather than the multiplayer blue: same shape of screen, different mode. */
+.tool-bar { margin-top: 8px; }
+.tool-dot { background: #E8B33D; box-shadow: 0 0 8px rgba(232,179,61,0.85); }
+.tool-screen { padding-bottom: 40px; }
+.tool-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.tool-back { background: none; border: none; color: #8FA396; font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; padding: 6px 2px; cursor: pointer; }
+.tool-back:active { transform: scale(0.95); }
+.tool-head-title { margin-left: auto; font-size: 12px; font-weight: 800; letter-spacing: 0.14em; color: #E8C97A; }
+.tool-intro { margin-bottom: 14px; }
+.tool-intro-title { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 5px; }
+.tool-intro-sub { font-size: 13px; line-height: 1.5; color: #A9BCAD; }
+.tool-card { padding: 16px 14px; }
+.tool-hint { font-size: 12px; color: #8FA396; margin: -4px 0 12px; }
+.tool-list { display: flex; flex-direction: column; gap: 7px; }
+.tool-row { display: flex; align-items: center; gap: 9px; }
+.tool-seat { flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800;
+  background: rgba(52,68,56,0.75); border: 1px solid rgba(241,237,225,0.18); color: #C9D6C9;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+.tool-seat-mine { background: linear-gradient(180deg, #F5CC6B, #DFA52C);
+  border-color: rgba(255,236,180,0.7); color: #1c1406;
+  box-shadow: 0 0 0 1px rgba(232,179,61,0.35), 0 3px 10px rgba(232,179,61,0.3); }
+.tool-seat:active { transform: scale(0.93); }
+.tool-input { flex: 1 1 auto; min-width: 0; margin: 0; }
+.tool-picks { flex-shrink: 0; font-size: 11px; color: #7E8F82; min-width: 46px; text-align: right; }
+.tool-row-mine .tool-picks { color: #E8C97A; }
+.tool-status { font-size: 13px; line-height: 1.5; color: #C9D6C9; margin: 2px 0 12px; padding: 0 2px; }
+.tool-status-sub { color: #8FA396; }
+.room-start.tool-start { color: #1c1406;
+  background: linear-gradient(180deg, #FFFBED 0%, #FFE9A8 13%, #F5CC6B 33%, #E0A62D 62%, #A9700F 88%, #E7BE55 100%);
+  border: 2px solid rgba(255,236,180,0.55);
+  box-shadow: 0 10px 24px rgba(232,179,61,0.35), inset 0 2px 2px rgba(255,255,255,0.6), inset 0 -4px 8px rgba(120,74,10,0.45); }
 .room-start { color: #07131f; background: linear-gradient(180deg, #CBE8FF, #6FB4F5);
   border: 1.5px solid rgba(190,225,255,0.75); box-shadow: 0 5px 16px rgba(60,130,200,0.4); }
 .room-start-off { opacity: 0.4; cursor: default; color: #9FB8CC;
