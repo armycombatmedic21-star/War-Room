@@ -1041,10 +1041,10 @@ function historyFor(name) {
 }
 const REAL_PROJ = {
   "49ers": 93.5,
-  "A.J. Brown": 178,
+  "A.J. Brown": 177,
   "AJ Barner": 86,
   "Aaron Rodgers": 234,
-  "Alec Pierce": 157,
+  "Alec Pierce": 152,
   "Amon-Ra St. Brown": 195,
   "Andres Borregales": 125,
   "Ashton Jeanty": 177,
@@ -1058,7 +1058,7 @@ const REAL_PROJ = {
   "Brandon Aubrey": 153,
   "Breece Hall": 165,
   "Brenton Strange": 102,
-  "Brian Thomas Jr.": 118,
+  "Brian Thomas Jr.": 129,
   "Brock Bowers": 144,
   "Brock Purdy": 350,
   "Broncos": 156.9,
@@ -1083,19 +1083,19 @@ const REAL_PROJ = {
   "Chase McLaughlin": 141,
   "Chiefs": 105.4,
   "Chigoziem Okonkwo": 70,
-  "Chris Olave": 175,
+  "Chris Olave": 177,
   "Christian McCaffrey": 226,
-  "Christian Watson": 126,
+  "Christian Watson": 129,
   "Chuba Hubbard": 122,
   "Colby Parkinson": 73,
   "Cole Kmet": 45,
   "Colston Loveland": 138,
   "Colts": 103.6,
   "Commanders": 104.3,
-  "Courtland Sutton": 135,
+  "Courtland Sutton": 125,
   "Cowboys": 81,
   "D'Andre Swift": 185,
-  "D.J. Moore": 125,
+  "DJ Moore": 127,
   "DK Metcalf": 123,
   "Dak Prescott": 361,
   "Dallas Goedert": 136,
@@ -1112,7 +1112,7 @@ const REAL_PROJ = {
   "Derrick Henry": 259,
   "Deshaun Watson": 200,
   "Dolphins": 97.8,
-  "Drake London": 216,
+  "Drake London": 187,
   "Drake Maye": 349,
   "Eagles": 136.7,
   "Eddy Pineiro": 130,
@@ -1153,10 +1153,10 @@ const REAL_PROJ = {
   "Jason Myers": 167,
   "Jason Sanders": 125,
   "Javonte Williams": 169,
-  "Jaxon Smith-Njigba": 219,
+  "Jaxon Smith-Njigba": 225,
   "Jaxson Dart": 346,
   "Jayden Daniels": 354,
-  "Jaylen Waddle": 126,
+  "Jaylen Waddle": 127,
   "Jaylen Warren": 131,
   "Jeremiyah Love": 174,
   "Jets": 74.8,
@@ -1169,7 +1169,7 @@ const REAL_PROJ = {
   "Josh Allen": 402,
   "Josh Jacobs": 178,
   "Justin Herbert": 334,
-  "Justin Jefferson": 153,
+  "Justin Jefferson": 160,
   "Juwan Johnson": 98,
   "Ka'imi Fairbairn": 157,
   "Kenneth Walker": 182,
@@ -1178,31 +1178,31 @@ const REAL_PROJ = {
   "Kyle Pitts": 126,
   "Kyler Murray": 315,
   "Kyren Williams": 193,
-  "Ladd McConkey": 128,
+  "Ladd McConkey": 143,
   "Lamar Jackson": 362,
   "Lions": 128.7,
-  "Luther Burden": 129,
-  "Malik Nabers": 156,
+  "Luther Burden": 135,
+  "Malik Nabers": 163,
   "Malik Willis": 315,
   "Mark Andrews": 108,
-  "Marvin Harrison Jr.": 128,
+  "Marvin Harrison Jr.": 132,
   "Mason Taylor": 62,
   "Matthew Stafford": 341,
   "Michael Mayer": 39,
   "Michael Penix Jr.": 161,
-  "Mike Evans": 122,
+  "Mike Evans": 138,
   "Mike Gesicki": 64,
   "Nick Folk": 151,
-  "Nico Collins": 169,
+  "Nico Collins": 167,
   "Omarion Hampton": 172,
   "Oronde Gadsden II": 77,
   "Packers": 105.4,
   "Panthers": 99.9,
-  "Parker Washington": 125,
+  "Parker Washington": 126,
   "Pat Freiermuth": 71,
   "Patrick Mahomes": 345,
   "Patriots": 114.8,
-  "Puka Nacua": 231,
+  "Puka Nacua": 228,
   "Quentin Johnston": 122,
   "Quinshon Judkins": 163,
   "RJ Harvey": 128,
@@ -1213,7 +1213,7 @@ const REAL_PROJ = {
   "Rhamondre Stevenson": 133,
   "Rico Dowdle": 137,
   "Riley Patterson": 119,
-  "Rome Odunze": 141,
+  "Rome Odunze": 131,
   "Saints": 120.9,
   "Sam Darnold": 315,
   "Sam LaPorta": 119,
@@ -1224,8 +1224,8 @@ const REAL_PROJ = {
   "T.J. Hockenson": 68,
   "Tee Higgins": 161,
   "Terrance Ferguson": 63,
-  "Terry McLaurin": 153,
-  "Tetairoa McMillan": 141,
+  "Terry McLaurin": 144,
+  "Tetairoa McMillan": 155,
   "Texans": 155.9,
   "Theo Johnson": 60,
   "Titans": 95.7,
@@ -1247,7 +1247,7 @@ const REAL_PROJ = {
   "Wil Lutz": 134,
   "Will Reichard": 138,
   "Zane Gonzalez": 118,
-  "Zay Flowers": 166
+  "Zay Flowers": 161
 };
 const PROJ_CURVE = {
   DST: [156.9, 155.9, 143.8, 137.8, 136.7, 133.8, 130, 128.7, 126.9, 126.7, 120.9, 119.5, 118.8, 114.8, 114.6, 113.9, 109.1, 108.1, 105.4, 105.4, 104.3, 103.6, 103.5, 99.9, 97.8, 95.7, 93.5, 90.2, 83.1, 81.2, 81, 74.8],
@@ -1255,7 +1255,7 @@ const PROJ_CURVE = {
   QB: [402, 362, 361, 357, 354, 350, 350, 349, 349, 348, 346, 345, 341, 337, 334, 333, 324, 315, 315, 315, 314, 310, 308, 307, 293, 278, 259, 248, 234, 200, 194, 161, 101, 38],
   RB: [297, 274, 269, 259, 227, 226, 214, 212, 203, 193, 185, 184, 182, 179, 178, 177, 177, 174, 172, 169, 165, 164, 163, 158, 155, 147, 140, 137, 136, 133, 133, 131, 128, 126, 125, 122],
   TE: [148, 144, 138, 136, 132, 126, 125, 125, 119, 119, 117, 109, 108, 108, 102, 99, 98, 93, 87, 86, 85, 80, 78, 77, 73, 71, 70, 68, 68, 64, 63, 62, 60, 56, 50, 48, 45, 40, 39, 32, 30, 30],
-  WR: [231, 219, 216, 207, 195, 191, 188, 178, 175, 169, 166, 161, 161, 157, 156, 153, 153, 151, 149, 142, 141, 141, 139, 138, 135, 129, 128, 128, 126, 126, 125, 125, 123, 122, 122, 118]
+  WR: [228, 225, 207, 195, 191, 188, 187, 177, 177, 167, 163, 161, 161, 161, 160, 155, 152, 151, 149, 144, 143, 142, 139, 138, 138, 135, 132, 131, 129, 129, 127, 127, 126, 125, 123, 122]
 };
 const REAL_PROJ_NORM = {};
 for (const k in REAL_PROJ) REAL_PROJ_NORM[normName(k)] = REAL_PROJ[k];
@@ -2818,7 +2818,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), React.createElement("div", { className: "knob-ends" }, React.createElement("span", null, low), React.createElement("span", null, high)), React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260829-180212";
+const APP_VERSION = "20260829-182639";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2840,11 +2840,13 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.70";
+const APP_RELEASE = "5.2.71";
 const CHANGELOG = [
   {
-    v: "5.2.70",
+    v: "5.2.71",
     notes: [
+      "WR projections updated to CBS 2026 non-PPR \u2014 Drake London was 29 points high, Mike Evans and Ladd McConkey both 15+ low.",
+      "Replacement level and every VOR number rebuilt off the new curves; Copilot and the composite grade follow automatically.",
       "Force pick is no longer gated on the shared clock \u2014 if authority election stalls, the draft can still be moved on.",
       "Authority lease now uses server time too; a phone with a fast clock could otherwise steal it on every tick.",
       "Starting a draft clears any picks and player claims left from a previous run in the same room.",
