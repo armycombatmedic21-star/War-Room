@@ -1747,6 +1747,7 @@ function copilotScarcity(available, team, pickNumber, userSlot, draftSeed, tunin
     margin: results.length > 1 ? best.score - results[1].score : 0
   };
 }
+const AUTHORITY_LEASE_MS = 15e3;
 const NFL_TEAMS = ["ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC", "LAC", "LAR", "LV", "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SEA", "SF", "TB", "TEN", "WAS"];
 function validatePlayerPool(players) {
   const problems = [];
@@ -2092,9 +2093,22 @@ function NFLDraftSimulator() {
     }
   }, []);
   const [roomSeats, setRoomSeats] = useState(null);
+  const [roomPresent, setRoomPresent] = useState([]);
+  const [clockSkew, setClockSkew] = useState(0);
+  useEffect(() => {
+    if (!roomId) return setClockSkew(0);
+    return net.onTimeOffset(setClockSkew);
+  }, [roomId]);
   const [roomRules, setRoomRules] = useState(null);
   const [pickStart, setPickStart] = useState(null);
   const [authority, setAuthority] = useState(null);
+  const authorityRef = useRef(null);
+  const [pickError, setPickError] = useState(null);
+  useEffect(() => {
+    if (!pickError) return;
+    const t = setTimeout(() => setPickError(null), 6e3);
+    return () => clearTimeout(t);
+  }, [pickError]);
   useEffect(() => {
     if (!roomId) return;
     const byId = new Map(PLAYERS.map((p) => [p.id, p]));
@@ -2104,8 +2118,7 @@ function NFLDraftSimulator() {
         const pl = byId.get(row.playerId);
         const pn = Number(row.pickNumber);
         if (!pl || !pn || pn < 1 || pn > TOTAL_PICKS) return;
-        if (rebuilt.length && pn !== rebuilt[rebuilt.length - 1].pickNumber + 1) return;
-        if (!rebuilt.length && pn !== 1) return;
+        if (rebuilt.some((r) => r.pickNumber === pn)) return;
         rebuilt.push({
           round: Math.ceil(pn / NUM_TEAMS),
           pickNumber: pn,
@@ -2117,27 +2130,33 @@ function NFLDraftSimulator() {
     });
   }, [roomId]);
   useEffect(() => {
-    if (roomId) return net.onAuthority(roomId, setAuthority);
+    if (roomId) return net.onAuthority(roomId, (a) => {
+      authorityRef.current = a;
+      setAuthority(a);
+    });
   }, [roomId]);
-  useEffect(() => {
-    if (!roomId || !isCommish) return;
-    net.beatCommish(roomId, roomUser);
-    const t = setInterval(() => net.beatCommish(roomId, roomUser), 5e3);
-    return () => clearInterval(t);
-  }, [roomId, isCommish, roomUser]);
-  const amAuthority = (() => {
-    if (!roomId) return true;
-    if (isCommish) return true;
-    if (!authority) return false;
-    if (Date.now() - (authority.at || 0) < 15e3) return false;
-    if (!roomSeats) return false;
+  const amAuthority = !roomId ? true : !!(authority && authority.user === roomUser);
+  const authorityHeir = (() => {
+    if (!roomId || !roomSeats) return false;
     const mine = Object.keys(roomSeats).find((k) => roomSeats[k].user === roomUser);
     if (!mine) return false;
-    const present = new Set(roomLive && roomLive.players || []);
+    const present = new Set(roomPresent);
     const candidates = Object.keys(roomSeats).filter((k) => present.has(roomSeats[k].user)).map(Number).sort((a, b) => a - b);
-    if (!candidates.length) return false;
-    return Number(mine) === candidates[0];
+    return !!candidates.length && Number(mine) === candidates[0];
   })();
+  useEffect(() => {
+    if (!roomId) return;
+    if (!isCommish && !authorityHeir) return;
+    const tick = () => {
+      const held = authorityRef.current;
+      const mine = held && held.user === roomUser;
+      const stale = !held || Date.now() + clockSkew - (held.at || 0) >= AUTHORITY_LEASE_MS;
+      if (mine || stale || isCommish && !held) net.claimAuthority(roomId, roomUser);
+    };
+    tick();
+    const t = setInterval(tick, 5e3);
+    return () => clearInterval(t);
+  }, [roomId, isCommish, authorityHeir, roomUser, roomPresent.length, clockSkew]);
   useEffect(() => {
     const h = (location.hash || "").replace(/^#/, "");
     if (!h) return;
@@ -2304,7 +2323,11 @@ function NFLDraftSimulator() {
     setPicks(next);
   }, [autoRun, rerunning, phase, picks.length, draftSeed]);
   const teams = useMemo(() => buildTeams(picks, userSlot || 1, userName, draftSeed, manualSlots, toolNames), [picks, userSlot, userName, draftSeed, manualSlots, toolNames]);
-  const pickNumber = picks.length + 1;
+  const filledPicks = useMemo(() => new Set(picks.map((p) => p.pickNumber)), [picks]);
+  const pickNumber = useMemo(() => {
+    for (let n = 1; n <= TOTAL_PICKS; n++) if (!filledPicks.has(n)) return n;
+    return TOTAL_PICKS + 1;
+  }, [filledPicks]);
   const draftComplete = picks.length >= TOTAL_PICKS;
   const round = Math.min(Math.ceil(pickNumber / NUM_TEAMS), ROUNDS);
   const pickInRound = pickNumber - (round - 1) * NUM_TEAMS;
@@ -2322,13 +2345,20 @@ function NFLDraftSimulator() {
     return net.onRoom(roomId, (r) => {
       setPickStart(r.pickStartedFor === pickNumber ? r.pickStartedAt : null);
       if (r.timerLen) setRoomRules((v) => ({ ...v || {}, timerLen: r.timerLen }));
+      setRoomPresent(r.players || []);
+      if (r.seats) setRoomSeats(r.seats);
     });
   }, [roomId, pickNumber]);
   function makePick(player) {
     if (roomId) {
-      const nextPn = picks.reduce((m, p) => Math.max(m, p.pickNumber), 0) + 1;
+      const nextPn = pickNumber;
       if (nextPn > TOTAL_PICKS) return;
-      net.writePick(roomId, nextPn, player.id, roomUser || null);
+      net.writePick(roomId, nextPn, player.id, roomUser || null, (ok, reason) => {
+        if (ok) return setPickError(null);
+        setPickError(
+          reason === "player" ? player.name + " was already taken \u2014 the board is catching up." : reason === "slot" ? "That pick was already made \u2014 the board is catching up." : "Pick didn't send. Check your connection and try again."
+        );
+      });
       return;
     }
     setPicks((prev) => {
@@ -2569,6 +2599,9 @@ function NFLDraftSimulator() {
       isCommish,
       roomSeats,
       roomRules,
+      clockSkew,
+      pickError,
+      onDismissPickError: () => setPickError(null),
       pickStart,
       amAuthority,
       spectating,
@@ -2785,7 +2818,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), React.createElement("div", { className: "knob-ends" }, React.createElement("span", null, low), React.createElement("span", null, high)), React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260829-132928";
+const APP_VERSION = "20260829-180212";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2807,11 +2840,24 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.67";
+const APP_RELEASE = "5.2.70";
 const CHANGELOG = [
   {
-    v: "5.2.67",
+    v: "5.2.70",
     notes: [
+      "Force pick is no longer gated on the shared clock \u2014 if authority election stalls, the draft can still be moved on.",
+      "Authority lease now uses server time too; a phone with a fast clock could otherwise steal it on every tick.",
+      "Starting a draft clears any picks and player claims left from a previous run in the same room.",
+      "Multiplayer sync overhaul. Fixed a crash in the commissioner-failover path (roomLive was never defined) that killed the client meant to take over.",
+      "Authority is now a single transactional lease \u2014 the commissioner and a fallback could both believe they were in charge and both write picks.",
+      "The board tolerates a missing pick instead of freezing every client on it.",
+      "All phones now measure the pick clock against server time, not their own.",
+      "Only the authority acts on an expired clock, and never instantly on waking.",
+      "Commissioner can force a pick when the clock runs out and autopick is off.",
+      "Multiplayer desync fixed. A pick is now claimed with a transaction instead of written over the top \u2014 a client behind on its listener can no longer overwrite a pick that already happened.",
+      "The same player can no longer be claimed by two seats.",
+      "A pick that loses the race now tells you, instead of silently vanishing.",
+      "New rooms default to no autopick.",
       "DRAFT TOOL now drops you straight back into a session in progress \u2014 the bar shows how many picks are in.",
       "Reset Draft Tool added to draft settings: discards the draft and returns to team names, seats still filled in.",
       "Fixed: leaving a tool session could leave the next mock draft with no CPU picks.",
@@ -3191,8 +3237,13 @@ const net = {
   },
   startDraft(id) {
     whenReady(() => {
-      const { ref, update } = FB.api;
-      update(ref(FB.db, "rooms/" + id), { status: "drafting", startedAt: Date.now() });
+      const { ref, update, remove } = FB.api;
+      try {
+        remove(ref(FB.db, "rooms/" + id + "/picks"));
+        remove(ref(FB.db, "rooms/" + id + "/taken"));
+      } catch (e) {
+      }
+      update(ref(FB.db, "rooms/" + id), { status: "drafting", startedAt: Date.now(), pickStartedAt: null, pickStartedFor: null });
     });
   },
   // The clock has to come from one shared timestamp. Each client running its
@@ -3219,20 +3270,83 @@ const net = {
     });
     return () => off();
   },
-  writePick(id, pickNumber, playerId, by) {
-    whenReady(() => {
-      const { ref, set, update } = FB.api;
-      set(ref(FB.db, "rooms/" + id + "/picks/" + pickNumber), { p: playerId, by: by || null, at: Date.now() });
-      update(ref(FB.db, "rooms/" + id), { lastPickAt: Date.now() });
+  // A pick is CLAIMED, never overwritten.
+  //
+  // This used to be a plain set(), and the pick number was computed from the
+  // caller's local picks array. Any client whose listener was even slightly
+  // behind — lag, a tunnel, a phone waking from sleep — would compute a slot
+  // that was already filled and silently overwrite someone else's pick. The
+  // drafted player reappeared on the board and the room diverged. The pick
+  // clock made several clients do it at the same instant.
+  //
+  // Two transactions now guard it. The slot claim rejects a second write to the
+  // same pick number; the player claim rejects the same player going to two
+  // slots. A losing write is reported to the caller instead of corrupting the
+  // draft, so the worst case is "that didn't land, pick again".
+  writePick(id, pickNumber, playerId, by, cb) {
+    whenReady(async () => {
+      const { ref, runTransaction, update, remove } = FB.api;
+      const done = (ok, reason) => {
+        if (cb) try {
+          cb(ok, reason);
+        } catch (e) {
+        }
+      };
+      try {
+        const claim = await runTransaction(
+          ref(FB.db, "rooms/" + id + "/taken/" + playerId),
+          (cur) => cur === null ? { pn: pickNumber, by: by || null, at: Date.now() } : void 0
+        );
+        if (!claim.committed) return done(false, "player");
+        const slot = await runTransaction(
+          ref(FB.db, "rooms/" + id + "/picks/" + pickNumber),
+          (cur) => cur === null ? { p: playerId, by: by || null, at: Date.now() } : void 0
+        );
+        if (!slot.committed) {
+          try {
+            await remove(ref(FB.db, "rooms/" + id + "/taken/" + playerId));
+          } catch (e) {
+          }
+          return done(false, "slot");
+        }
+        update(ref(FB.db, "rooms/" + id), { lastPickAt: Date.now() });
+        done(true, null);
+      } catch (e) {
+        done(false, "error");
+      }
     });
   },
-  // Commissioner heartbeat. If it goes stale another client takes over CPU
-  // duty, so a locked phone does not freeze the room.
-  beatCommish(id, user) {
+  // Authority is a LEASE, not a heartbeat.
+  //
+  // It used to be a plain set(): the commissioner wrote unconditionally and
+  // separately believed itself authoritative no matter what the node said. A
+  // phone that backgrounded past the stale window came back still acting as
+  // authority while the fallback had already promoted itself — two clients
+  // driving CPU picks and both writing. Now one node decides, everyone reads
+  // it, and the transaction means only one client can hold it at a time.
+  claimAuthority(id, user, force) {
     whenReady(() => {
-      const { ref, set } = FB.api;
-      set(ref(FB.db, "rooms/" + id + "/authority"), { user, at: Date.now() });
+      const { ref, runTransaction } = FB.api;
+      runTransaction(ref(FB.db, "rooms/" + id + "/authority"), (cur) => {
+        if (cur && cur.user !== user && !force && Date.now() - (cur.at || 0) < AUTHORITY_LEASE_MS) return;
+        return { user, at: Date.now() };
+      });
     });
+  },
+  // Phones disagree about the time, sometimes by minutes. pickStartedAt is
+  // written by whichever client holds authority, then every other client
+  // measured elapsed time against ITS own Date.now() — so they disagreed about
+  // when the clock expired by exactly their clock skew. Firebase publishes the
+  // offset between this device and the server; applying it puts everyone on the
+  // same reference.
+  onTimeOffset(cb) {
+    let off = () => {
+    };
+    whenReady(() => {
+      const { ref, onValue } = FB.api;
+      off = onValue(ref(FB.db, ".info/serverTimeOffset"), (snap) => cb(Number(snap.val()) || 0));
+    });
+    return () => off();
   },
   onAuthority(id, cb) {
     let off = () => {
@@ -3565,7 +3679,7 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
   const [rooms, setRooms] = useState([]);
   const [msg, setMsg] = useState("");
   const [creating, setCreating] = useState(false);
-  const [opts, setOpts] = useState({ allowSpectators: true, noGodsEye: false, noCopilot: false, chaos: false, noAutopick: false, timerLen: 90 });
+  const [opts, setOpts] = useState({ allowSpectators: true, noGodsEye: false, noCopilot: false, chaos: false, noAutopick: true, timerLen: 90 });
   const [freshRoom, setFreshRoom] = useState(null);
   const [present, setPresent] = useState([]);
   const [whoOpen, setWhoOpen] = useState(true);
@@ -3692,7 +3806,7 @@ function LobbyScreen({ onLeave, onEnterRoom }) {
           ["allowSpectators", "Allow spectators", "Anyone can watch without taking a slot"],
           ["noCopilot", "Disable Copilot", "No AI recommendations for anyone in this room"],
           ["noGodsEye", "Disable God's Eye", "No availability odds for anyone in this room"],
-          ["noAutopick", "No autopick", "The clock runs out without picking for anyone"]
+          ["noAutopick", "No autopick", "Clock runs out without picking \u2014 recommended"]
         ].map(([k, title, sub]) => React.createElement(
           "button",
           {
@@ -4391,6 +4505,9 @@ function DraftScreen(props) {
     isCommish,
     roomSeats,
     roomRules,
+    clockSkew,
+    pickError,
+    onDismissPickError,
     pickStart,
     amAuthority,
     spectating,
@@ -4427,7 +4544,7 @@ function DraftScreen(props) {
     }
     const tick = () => {
       if (roomId) {
-        setClockLeft(pickStart ? Math.max(0, timerLen - Math.floor((Date.now() - pickStart) / 1e3)) : timerLen);
+        setClockLeft(pickStart ? Math.max(0, timerLen - Math.floor((Date.now() + clockSkew - pickStart) / 1e3)) : timerLen);
       } else {
         setClockLeft((v) => v <= 0 ? 0 : v - 1);
       }
@@ -4436,7 +4553,7 @@ function DraftScreen(props) {
     tick();
     const id = setInterval(tick, 1e3);
     return () => clearInterval(id);
-  }, [isUserTurn, pickNumber, timerLen, roomId, pickStart]);
+  }, [isUserTurn, pickNumber, timerLen, roomId, pickStart, clockSkew]);
   const canDraft = !spectating;
   const [themLeft, setThemLeft] = useState(timerLen);
   useEffect(() => {
@@ -4444,11 +4561,11 @@ function DraftScreen(props) {
       setThemLeft(timerLen);
       return;
     }
-    const tick = () => setThemLeft(pickStart ? Math.max(0, timerLen - Math.floor((Date.now() - pickStart) / 1e3)) : timerLen);
+    const tick = () => setThemLeft(pickStart ? Math.max(0, timerLen - Math.floor((Date.now() + clockSkew - pickStart) / 1e3)) : timerLen);
     tick();
     const id = setInterval(tick, 1e3);
     return () => clearInterval(id);
-  }, [isUserTurn, pickNumber, timerLen, roomId, pickStart]);
+  }, [isUserTurn, pickNumber, timerLen, roomId, pickStart, clockSkew]);
   const themPct = timerLen ? themLeft / timerLen : 0;
   const themTone = themPct > 0.5 ? "ok" : themPct > 0.25 ? "warn" : "crit";
   const themFmt = `${Math.floor(themLeft / 60)}:${String(themLeft % 60).padStart(2, "0")}`;
@@ -4458,14 +4575,20 @@ function DraftScreen(props) {
   useEffect(() => {
     if (roomRules && roomRules.noAutopick) return;
     if (!roomId || spectating || !onAutoPick) return;
-    const expired = pickStart && (Date.now() - pickStart) / 1e3 >= timerLen;
+    const expired = pickStart && (Date.now() + clockSkew - pickStart) / 1e3 >= timerLen;
     if (!expired) return;
-    if (isUserTurn) {
-      onAutoPick();
-      return;
-    }
-    if (amAuthority) onAutoPick();
-  }, [clockLeft, themLeft, isUserTurn, roomId, pickStart, amAuthority]);
+    if (!amAuthority) return;
+    const t = setTimeout(() => onAutoPick(), 900);
+    return () => clearTimeout(t);
+  }, [clockLeft, themLeft, isUserTurn, roomId, pickStart, amAuthority, clockSkew]);
+  const [stallSecs, setStallSecs] = useState(0);
+  useEffect(() => {
+    setStallSecs(0);
+    if (!roomId || draftComplete || isUserTurn) return;
+    const t = setInterval(() => setStallSecs((v) => v + 1), 1e3);
+    return () => clearInterval(t);
+  }, [roomId, pickNumber, draftComplete, isUserTurn]);
+  const canForcePick = !!roomId && !spectating && amAuthority && !draftComplete && !isUserTurn && (themLeft === 0 || stallSecs >= Math.max(30, timerLen));
   const progressPct = Math.min(100, (pickNumber - 1) / TOTAL_PICKS * 100);
   const onClockSeat = roomSeats && currentTeamIndex != null ? roomSeats[currentTeamIndex + 1] : null;
   const onClockName = draftComplete ? null : onClockSeat ? onClockSeat.teamName || onClockSeat.user : teams[currentTeamIndex]?.name;
@@ -4577,6 +4700,13 @@ function DraftScreen(props) {
       },
       onClose: () => setLockOpen(false)
     }),
+    canForcePick && React.createElement(
+      "button",
+      { className: "force-pick", onClick: onAutoPick },
+      React.createElement("span", { className: "force-pick-title" }, "Force pick for " + (onClockName || "this seat")),
+      React.createElement("span", { className: "force-pick-sub" }, (themLeft === 0 ? "Clock expired" : "No pick in " + stallSecs + "s") + " \u2014 drafts best available")
+    ),
+    pickError && React.createElement("div", { className: "pick-err", onClick: onDismissPickError }, React.createElement("span", { className: "pick-err-icon" }, "\u26A0"), React.createElement("span", { className: "pick-err-text" }, pickError), React.createElement("span", { className: "pick-err-x" }, "\u2715")),
     gearOpen && React.createElement("div", { className: "gear-backdrop", onClick: () => setGearOpen(false) }, React.createElement("div", { className: "gear-sheet", onClick: (e) => e.stopPropagation() }, React.createElement("div", { className: "gear-head" }, React.createElement("span", { className: "gear-title mono" }, "DRAFT SETTINGS"), React.createElement("button", { className: "gear-close", onClick: () => setGearOpen(false) }, "\u2715")), React.createElement("div", { className: "gear-label mono" }, "DRAFT TIMER"), React.createElement("button", { className: "noise-row" + (timerOn ? " noise-on" : ""), onClick: () => setTimerOn(!timerOn) }, React.createElement("span", { className: "noise-text" }, React.createElement("span", { className: "noise-title" }, "Show clock on your turn"), React.createElement("span", { className: "noise-sub" }, "Counts down only \u2014 never picks for you")), React.createElement("span", { className: "cwswitch" + (timerOn ? " cwswitch-on" : "") }, React.createElement("span", { className: "cwknob" }))), timerOn && React.createElement("div", { className: "gear-chips" }, [30, 60, 90, 120].map((s) => React.createElement(
       "button",
       {
@@ -6562,6 +6692,23 @@ button { -webkit-user-select: none; user-select: none; touch-action: manipulatio
 .tool-bar-live { border-color: rgba(232,179,61,0.55); box-shadow: 0 0 0 1px rgba(232,179,61,0.20), 0 5px 16px rgba(0,0,0,0.34); }
 .tool-bar-live .mp-dot { animation: toolPulse 1.9s ease-in-out infinite; }
 @keyframes toolPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+/* sits above the pick-error banner so the two never overlap */
+.force-pick { position: fixed; left: 12px; right: 12px; bottom: 148px; z-index: 95;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  padding: 11px 13px; border-radius: 12px; cursor: pointer; color: #1c1406;
+  background: linear-gradient(180deg, #F5CC6B, #DFA52C); border: 1px solid rgba(255,236,180,0.6);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.45); animation: slideIn 0.22s ease; }
+.force-pick:active { transform: scale(0.985); }
+.force-pick-title { font-size: 13px; font-weight: 800; }
+.force-pick-sub { font-size: 11px; opacity: 0.75; }
+.pick-err { position: fixed; left: 12px; right: 12px; bottom: 84px; z-index: 96;
+  display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-radius: 12px; cursor: pointer;
+  font-size: 12.5px; line-height: 1.4; color: #FFE7DD;
+  background: rgba(84,26,14,0.94); border: 1px solid rgba(216,84,47,0.6);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5); animation: slideIn 0.22s ease; }
+.pick-err-icon { flex-shrink: 0; color: #FF9E7A; font-size: 14px; }
+.pick-err-text { flex: 1 1 auto; min-width: 0; }
+.pick-err-x { flex-shrink: 0; color: #C4705A; font-size: 12px; }
 .gear-exit-chev { margin-left: auto; color: #C4705A; font-size: 17px; line-height: 1; }
 .resume-kicker { position: relative; font-size: 10.5px; font-weight: 800; letter-spacing: 0.2em; color: #8FD6AE; }
 .resume-picks { position: relative; font-family: 'Anton', sans-serif; font-size: 56px; line-height: 1.05;
