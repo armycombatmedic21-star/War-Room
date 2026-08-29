@@ -1786,6 +1786,8 @@ const __LOGIC__ = {
   assignToSlot,
   countPos,
   simulateAvailability,
+  copilotScarcity,
+  nextUserPick,
   compositeWeekly,
   BYE_WEEKS,
   projectedPoints,
@@ -2818,7 +2820,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), React.createElement("div", { className: "knob-ends" }, React.createElement("span", null, low), React.createElement("span", null, high)), React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260829-182639";
+const APP_VERSION = "20260829-230922";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2840,11 +2842,13 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.71";
+const APP_RELEASE = "5.2.72";
 const CHANGELOG = [
   {
-    v: "5.2.71",
+    v: "5.2.72",
     notes: [
+      "Fixed: in Draft Tool, Copilot and the position-need counters read YOUR roster no matter which seat was on the clock \u2014 so every team got advised to fill your holes, which is why it kept calling for quarterbacks.",
+      "Copilot is now on the test surface; it never was, which is how this slipped through.",
       "WR projections updated to CBS 2026 non-PPR \u2014 Drake London was 29 points high, Mike Evans and Ladd McConkey both 15+ low.",
       "Replacement level and every VOR number rebuilt off the new curves; Copilot and the composite grade follow automatically.",
       "Force pick is no longer gated on the shared clock \u2014 if authority election stalls, the draft can still be moved on.",
@@ -4594,8 +4598,10 @@ function DraftScreen(props) {
   const progressPct = Math.min(100, (pickNumber - 1) / TOTAL_PICKS * 100);
   const onClockSeat = roomSeats && currentTeamIndex != null ? roomSeats[currentTeamIndex + 1] : null;
   const onClockName = draftComplete ? null : onClockSeat ? onClockSeat.teamName || onClockSeat.user : teams[currentTeamIndex]?.name;
+  const adviceTeamIndex = toolMode && !draftComplete && currentTeamIndex != null ? currentTeamIndex : userSlot - 1;
+  const adviceTeam = teams[adviceTeamIndex];
   const userStarterByes = useMemo(() => {
-    const slots = teams[userSlot - 1]?.slots || {};
+    const slots = adviceTeam?.slots || {};
     const map = {};
     LINEUP_SLOTS.forEach((k) => {
       const pl = slots[k];
@@ -4604,9 +4610,9 @@ function DraftScreen(props) {
       if (bye) (map[bye] = map[bye] || []).push({ ...pl, slot: k });
     });
     return map;
-  }, [teams, userSlot]);
+  }, [adviceTeam]);
   const userStartersByPos = useMemo(() => {
-    const slots = teams[userSlot - 1]?.slots || {};
+    const slots = adviceTeam?.slots || {};
     const map = {};
     LINEUP_SLOTS.forEach((k) => {
       const pl = slots[k];
@@ -4614,7 +4620,7 @@ function DraftScreen(props) {
       (map[pl.pos] = map[pl.pos] || []).push({ ...pl, slot: k, bye: BYE_WEEKS[pl.team] });
     });
     return map;
-  }, [teams, userSlot]);
+  }, [adviceTeam]);
   return React.createElement(
     "div",
     { className: "draft" + (launching ? " is-entering" : "") },
@@ -4763,7 +4769,7 @@ function DraftScreen(props) {
         userStarterByes,
         userStartersByPos,
         pickNumber,
-        team: teams[userSlot - 1],
+        team: adviceTeam,
         sortBy,
         setSortBy,
         copilot,
