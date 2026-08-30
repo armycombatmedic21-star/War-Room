@@ -2820,7 +2820,7 @@ function TuneSlider({ value, onChange, label, low, high, help }) {
     }
   ), React.createElement("div", { className: "knob-ends" }, React.createElement("span", null, low), React.createElement("span", null, high)), React.createElement("div", { className: "knob-help" }, help));
 }
-const APP_VERSION = "20260829-230922";
+const APP_VERSION = "20260830-145337";
 let updateChecked = false;
 async function checkForUpdate(safeToReload) {
   if (updateChecked || !safeToReload) return;
@@ -2842,11 +2842,12 @@ async function checkForUpdate(safeToReload) {
   } catch (e) {
   }
 }
-const APP_RELEASE = "5.2.72";
+const APP_RELEASE = "5.2.73";
 const CHANGELOG = [
   {
-    v: "5.2.72",
+    v: "5.2.73",
     notes: [
+      "Desktop layout. Above 1024px the mini board and the player list sit side by side with the board pinned, so you can scan players without losing the board. Mobile is untouched \u2014 every desktop rule lives behind a min-width query.",
       "Fixed: in Draft Tool, Copilot and the position-need counters read YOUR roster no matter which seat was on the clock \u2014 so every team got advised to fill your holes, which is why it kept calling for quarterbacks.",
       "Copilot is now on the test surface; it never was, which is how this slipped through.",
       "WR projections updated to CBS 2026 non-PPR \u2014 Drake London was 29 points high, Mike Evans and Ladd McConkey both 15+ low.",
@@ -5027,7 +5028,7 @@ function PlayersTab({ filter, setFilter, search, setSearch, players, availableCo
     }, 780);
     setTimeout(() => setPulsePos(null), 1750);
   }
-  return React.createElement("div", null, React.createElement(MiniBoard, { picks, teams, userSlot, pickNumber, roomSeats }), React.createElement(
+  return React.createElement("div", { className: "players-tab" }, React.createElement("div", { className: "ptab-board" }, React.createElement(MiniBoard, { picks, teams, userSlot, pickNumber, roomSeats })), React.createElement(
     "input",
     {
       className: "text-input search",
@@ -7746,6 +7747,52 @@ input, select, textarea { font-size: 16px; }
 .note-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 4px currentColor; }
 .note-dot-good { background: #3E9C6B; color: #3E9C6B; }
 .note-dot-bad { background: #D8542F; color: #D8542F; }
+/* \u2500\u2500 Desktop \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   Everything below is behind min-width:1024px. Phones fall entirely outside
+   it and render exactly as before \u2014 no existing rule was modified to make
+   this work, only added, so mobile is unchanged by construction.
+
+   The win is seeing the board and the player list at once. On a phone you
+   scroll between them; here they sit side by side with the board pinned, so
+   it stays in view while you scan players. */
+@media (min-width: 1024px) {
+  .draft { max-width: 1180px; padding: 22px 24px 116px; }
+  .setup { max-width: 620px; padding-top: 44px; }
+
+  .clock-banner { padding: 14px 18px; }
+  .clk-time { font-size: 30px; }
+  .last-pick, .human-pick { height: 62px; font-size: 13px; }
+
+  /* Board left and sticky, players right and scrolling. */
+  .players-tab { display: grid; grid-template-columns: minmax(380px, 430px) 1fr;
+    column-gap: 22px; align-items: start; }
+  .ptab-board { grid-column: 1; grid-row: 1 / span 40; position: sticky; top: 14px; }
+  .players-tab > *:not(.ptab-board) { grid-column: 2; }
+
+  /* A laptop has vertical room a phone does not; show more of the draft. */
+  .mini-wrap { max-height: calc(100dvh - 320px); }
+  .mini-cell { height: 24px; font-size: 9.5px; }
+  .filter-row { flex-wrap: wrap; overflow-x: visible; }
+
+  /* A full-width fixed bar reads as a phone UI on a laptop. Dock it. */
+  .tabbar { left: 50%; right: auto; transform: translateX(-50%); bottom: 18px;
+    width: auto; min-width: 540px; border-radius: 16px; padding: 3px 10px;
+    border: 1px solid rgba(241,237,225,0.12); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .tabitem { padding: 10px 24px; }
+
+  /* Notices sized for a 390px screen become banners at 1180px. */
+  .pick-err, .force-pick { left: auto; right: 24px; width: 380px; bottom: 100px; }
+  .force-pick { bottom: 164px; }
+  .gear-sheet { max-width: 520px; margin: 0 auto; border-radius: 18px 18px 0 0; }
+
+  .player-row:hover { border-color: rgba(241,237,225,0.26); }
+}
+
+/* Wider still: give the board the extra room, not the list. */
+@media (min-width: 1500px) {
+  .draft { max-width: 1340px; }
+  .players-tab { grid-template-columns: minmax(430px, 520px) 1fr; }
+}
 `;
 {
   __LOGIC__;
